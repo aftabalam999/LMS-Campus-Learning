@@ -5,13 +5,13 @@ import { getFunctions } from 'firebase/functions';
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.REACT_APP_FIREBASE_APP_ID,
-  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
+  apiKey: "AIzaSyBaLncnVJzGRHxgpAhyl9IeX8dz2e3e-VA",
+  authDomain: "dharamshalacampus.firebaseapp.com",
+  projectId: "dharamshalacampus",
+  storageBucket: "dharamshalacampus.appspot.com",
+  messagingSenderId: "1061564721485",
+  appId: "1:1061564721485:web:6a384c1e2f446ea154ef04",
+  measurementId: "G-3E03XTJRT0"
 };
 
 // Initialize Firebase
