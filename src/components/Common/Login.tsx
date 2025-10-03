@@ -1,16 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { AuthService } from '../../services/auth';
 
 const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [checkingRedirect, setCheckingRedirect] = useState(true);
 
   const { signInWithGoogle, currentUser, userData } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const from = location.state?.from?.pathname || '/dashboard';
+
+  // Check for redirect result on component mount (for users returning from Google OAuth)
+  useEffect(() => {
+    const checkRedirectResult = async () => {
+      try {
+        setCheckingRedirect(true);
+        const result = await AuthService.handleRedirectResult();
+        if (result) {
+          // User successfully signed in via redirect
+          console.log('User signed in via redirect:', result);
+          setTimeout(() => {
+            navigate(from, { replace: true });
+          }, 500);
+        }
+      } catch (error) {
+        console.error('Error checking redirect result:', error);
+      } finally {
+        setCheckingRedirect(false);
+      }
+    };
+
+    checkRedirectResult();
+  }, [navigate, from]);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -41,10 +66,35 @@ const Login: React.FC = () => {
         return;
       }
       
-      setError('Failed to sign in with Google. Please try again.');
+      // Provide more specific error messages
+      let errorMessage = 'Failed to sign in with Google. Please try again.';
+      
+      if (error.code === 'auth/popup-blocked') {
+        errorMessage = 'Popup was blocked. Redirecting to Google sign-in...';
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        errorMessage = 'Sign-in cancelled. Redirecting...';
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = 'Network error. Please check your internet connection.';
+      } else if (error.code === 'auth/internal-error') {
+        errorMessage = 'An error occurred. Trying alternate sign-in method...';
+      }
+      
+      setError(errorMessage);
       setLoading(false);
     }
   };
+
+  // Show loading state while checking redirect
+  if (checkingRedirect) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Checking sign-in status...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
