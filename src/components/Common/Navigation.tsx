@@ -321,6 +321,11 @@ export default function Navigation() {
       {showBugModal && (
         <BugFeatureModal onClose={() => setShowBugModal(false)} />
       )}
+
+      {/* What's New Modal */}
+      {showWhatsNewModal && (
+        <WhatsNewModal onClose={() => setShowWhatsNewModal(false)} />
+      )}
                       <button
                         onClick={() => {
                           setShowUserMenu(false);

@@ -20,27 +20,35 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ onClose }) => {
   const newFeatures = [
     {
       date: 'October 5, 2025',
-      feature: 'Enhanced responsive design for mobile and tablet devices'
+      feature: '🎯 Real-time Attendance Tracking System - Admin can now track student attendance with live statistics, date/campus filtering, and mentee management'
     },
     {
       date: 'October 5, 2025',
-      feature: 'Bug/Feature reporting system with admin review panel'
+      feature: '📊 Interactive Attendance Dashboard - Visual progress bars, percentage indicators, and automatic recalculation when data changes'
     },
     {
       date: 'October 5, 2025',
-      feature: 'Unified campus and house dropdown options for consistency'
+      feature: '👥 My Mentees Section - Admin can search, view individual attendance rates, and override mentor functions'
+    },
+    {
+      date: 'October 5, 2025',
+      feature: '🔄 Live Firebase Integration - Real-time updates when goals are approved or reflections are submitted'
+    },
+    {
+      date: 'October 5, 2025',
+      feature: '📱 Mobile-Responsive Attendance System - Fully optimized for desktop, tablet, and mobile devices'
+    },
+    {
+      date: 'October 5, 2025',
+      feature: '🐛 Bug/Feature reporting system with admin review panel'
+    },
+    {
+      date: 'October 5, 2025',
+      feature: '🎨 Enhanced responsive design for mobile and tablet devices'
     },
     {
       date: 'October 4, 2025',
-      feature: 'New logo and favicon updates across the platform'
-    },
-    {
-      date: 'October 3, 2025',
-      feature: 'Improved mentor browser with better filtering options'
-    },
-    {
-      date: 'October 2, 2025',
-      feature: 'Enhanced admin dashboard with better user management'
+      feature: '🖼️ New logo and favicon updates across the platform'
     }
   ];
 
