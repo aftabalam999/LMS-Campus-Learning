@@ -37,6 +37,7 @@ const SuperMentorManagement: React.FC = () => {
       
       await UserService.updateUser(userId, {
         isSuperMentor: !currentStatus,
+        isMentor: !currentStatus, // Also set as mentor when becoming super mentor
         // Reset max_mentees when toggling super mentor status
         max_mentees: !currentStatus ? undefined : 2
       });

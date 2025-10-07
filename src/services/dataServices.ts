@@ -769,10 +769,21 @@ export class AdminService extends FirestoreService {
   // Assign mentor to student
   static async assignMentor(studentId: string, mentorId: string): Promise<void> {
     try {
-      return await this.update<any>(COLLECTIONS.USERS, studentId, { 
+      // First, assign the mentor to the student
+      await this.update<any>(COLLECTIONS.USERS, studentId, { 
         mentor_id: mentorId,
         updated_at: new Date()
       });
+
+      // Then, ensure the mentor is marked as a mentor
+      const { UserService } = await import('./firestore');
+      const mentor = await UserService.getUserById(mentorId);
+      if (mentor && !mentor.isMentor) {
+        await UserService.updateUser(mentorId, {
+          isMentor: true,
+          updated_at: new Date()
+        });
+      }
     } catch (error) {
       console.error('Error assigning mentor:', error);
       throw error;

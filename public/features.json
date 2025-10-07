@@ -1,8 +1,17 @@
 {
-  "generatedAt": "2025-10-07T07:37:42.384Z",
+  "generatedAt": "2025-10-07T07:48:06.577Z",
   "version": "0.1.0",
   "features": {
     "all": [
+      {
+        "id": "feature-f25d39ec",
+        "title": "Complete dashboard overhaul with uniform layouts, date grouping, and pending item prioritization",
+        "description": "Complete dashboard overhaul with uniform layouts, date grouping, and pending item prioritization",
+        "status": "released",
+        "dateAdded": "2025-10-07",
+        "commitHash": "f25d39ecc2d3c503ab5197314ade8c55b6e96782",
+        "author": "Mubin"
+      },
       {
         "id": "feature-ab515a30",
         "title": "Implement comprehensive real-time attendance tracking system",
@@ -51,6 +60,15 @@
       }
     ],
     "released": [
+      {
+        "id": "feature-f25d39ec",
+        "title": "Complete dashboard overhaul with uniform layouts, date grouping, and pending item prioritization",
+        "description": "Complete dashboard overhaul with uniform layouts, date grouping, and pending item prioritization",
+        "status": "released",
+        "dateAdded": "2025-10-07",
+        "commitHash": "f25d39ecc2d3c503ab5197314ade8c55b6e96782",
+        "author": "Mubin"
+      },
       {
         "id": "feature-ab515a30",
         "title": "Implement comprehensive real-time attendance tracking system",
