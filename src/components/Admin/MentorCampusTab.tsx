@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { AdminService, GoalService, ReflectionService } from '../../services/dataServices';
 import { User, DailyGoal, DailyReflection } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
-import { Search, Users, Target, MessageSquare, RefreshCw, ChevronDown, CheckCircle, Eye, ArrowLeft } from 'lucide-react';
+import { Search, Users, Target, MessageSquare, RefreshCw, ChevronDown, CheckCircle, Eye, ArrowLeft, AlertCircle } from 'lucide-react';
 
 interface CampusData {
   students: User[];
@@ -48,7 +48,7 @@ const MentorCampusTab: React.FC<{ campusId: string }> = ({ campusId }) => {
   const [campusData, setCampusData] = useState<CampusData | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filter, setFilter] = useState<'all' | 'goals' | 'reflections'>('all');
+  const [filter, setFilter] = useState<'all' | 'goals' | 'reflections' | 'no_goals_today'>('all');
   const [page, setPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userGoals, setUserGoals] = useState<DailyGoal[]>([]);
@@ -158,6 +158,23 @@ const MentorCampusTab: React.FC<{ campusId: string }> = ({ campusId }) => {
     } else if (filter === 'reflections') {
       const studentIds = campusData.reflections.filter(r => r.status === 'pending').map(r => r.student_id);
       students = students.filter(s => studentIds.includes(s.id));
+    } else if (filter === 'no_goals_today') {
+      // Get students who haven't submitted goals today
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const studentsWithGoalsToday = new Set(
+        campusData.goals
+          .filter(goal => {
+            const goalDate = new Date(goal.created_at);
+            return goalDate >= today && goalDate < tomorrow;
+          })
+          .map(goal => goal.student_id)
+      );
+
+      students = students.filter(s => !studentsWithGoalsToday.has(s.id));
     }
 
     // Sort students: those with pending items first
@@ -190,6 +207,25 @@ const MentorCampusTab: React.FC<{ campusId: string }> = ({ campusId }) => {
   const totalStudents = campusData?.students.length || 0;
   const goalsToReview = campusData?.goals.filter(g => g.status === 'pending').length || 0;
   const reflectionsToReview = campusData?.reflections.filter(r => r.status === 'pending').length || 0;
+
+  // Calculate students who haven't submitted goals today
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Set to start of day
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const studentsWithGoalsToday = new Set(
+    campusData?.goals
+      .filter(goal => {
+        const goalDate = new Date(goal.created_at);
+        return goalDate >= today && goalDate < tomorrow;
+      })
+      .map(goal => goal.student_id) || []
+  );
+
+  const studentsWithoutGoalsToday = campusData?.students.filter(
+    student => !studentsWithGoalsToday.has(student.id)
+  ).length || 0;
 
   return (
     <div className="min-h-screen bg-gray-50 p-3 sm:p-6">
@@ -414,7 +450,7 @@ const MentorCampusTab: React.FC<{ campusId: string }> = ({ campusId }) => {
         // Student List View
         <div>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 flex-1">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 sm:gap-4 flex-1">
               <div className="bg-white rounded-lg shadow p-3 sm:p-4 flex items-center space-x-2 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => setFilter('all')}>
                 <Users className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
                 <div>
@@ -434,6 +470,13 @@ const MentorCampusTab: React.FC<{ campusId: string }> = ({ campusId }) => {
                 <div>
                   <p className="text-xs sm:text-sm text-gray-600">Reflections to Review</p>
                   <p className="text-lg sm:text-xl font-bold text-gray-900">{reflectionsToReview}</p>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg shadow p-3 sm:p-4 flex items-center space-x-2 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => setFilter('no_goals_today')}>
+                <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
+                <div>
+                  <p className="text-xs sm:text-sm text-gray-600">No Goals Today</p>
+                  <p className="text-lg sm:text-xl font-bold text-gray-900">{studentsWithoutGoalsToday}</p>
                 </div>
               </div>
             </div>

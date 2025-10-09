@@ -24,7 +24,6 @@ import {
 
 import BugFeatureModal from './BugFeatureModal';
 import WhatsNewModal from './WhatsNewModal';
-import { useFeaturesManifest } from '../../hooks/useFeaturesManifest';
 
 interface NavItem {
   label: string
@@ -36,7 +35,7 @@ interface NavItem {
 }
 
 export default function Navigation() {
-  const { currentUser, userData, setUserData, signInWithGoogle, signOut } = useAuth();
+  const { userData, setUserData, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -45,7 +44,7 @@ export default function Navigation() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showWhatsNewModal, setShowWhatsNewModal] = useState(false);
   const [showBugModal, setShowBugModal] = useState(false);
-  const { shouldShowComingSoon, getWhatsNewFeatures } = useFeaturesManifest();  // Handle ESC key for modals
+  // const { shouldShowComingSoon, getWhatsNewFeatures } = useFeaturesManifest();  // Handle ESC key for modals
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -663,6 +662,47 @@ export default function Navigation() {
                     </div>
                   </div>
                 )}
+                  {/* Gemini API Key field */}
+                  <div className="flex items-start space-x-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <Sparkles size={20} className="text-purple-600 mt-0.5" />
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Gemini API Key <span className="text-xs text-gray-500">(Optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={userData?.gemini_api_key || ''}
+                        onChange={async (e) => {
+                          const newKey = e.target.value;
+                          if (userData) {
+                            try {
+                              await UserService.updateUser(userData.id, { gemini_api_key: newKey });
+                              setUserData({ ...userData, gemini_api_key: newKey });
+                            } catch (error) {
+                              alert('Failed to update API key.');
+                            }
+                          }
+                        }}
+                        placeholder="Paste your Gemini API key here"
+                        className="block w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                      />
+                      <div className="mt-3 p-3 bg-white border border-blue-200 rounded-lg">
+                        <p className="text-sm text-blue-800 mb-2">
+                          <strong>Get your free Gemini API key:</strong>
+                        </p>
+                        <ol className="text-sm text-blue-800 list-decimal list-inside space-y-1">
+                          <li>Go to <a href="https://aistudio.google.com/app/api-keys" target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-600 font-medium">Google AI Studio API Keys</a></li>
+                          <li>Sign in with your Google account</li>
+                          <li>Click "Create API key"</li>
+                          <li>Copy the generated key</li>
+                          <li>Paste it here (saves automatically)</li>
+                        </ol>
+                        <p className="text-xs text-blue-700 mt-2">
+                          Note: This is different from your Firebase API key. Use the key from Google AI Studio.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
               </div>
             </div>
 
@@ -671,7 +711,7 @@ export default function Navigation() {
                 onClick={() => setShowProfileModal(false)}
                 className="w-full px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors font-medium"
               >
-                Close
+                Done
               </button>
             </div>
           </div>

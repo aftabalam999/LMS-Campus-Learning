@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
+import Toast from '../Common/Toast';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
   PhaseService, 
@@ -9,21 +11,23 @@ import {
 } from '../../services/dataServices';
 import { DataSeedingService } from '../../services/dataSeedingService';
 import { Phase, Topic, DailyGoal, DailyReflection, GoalFormData } from '../../types';
-// Removed unused imports
+import { getSmartFeedback } from '../../services/geminiClientApi';
 import DailyReflectionForm from './DailyReflectionForm';
+import { detailedTopics } from '../../data/initialData';
 import { 
-  Target, 
+  Target,
   TrendingUp, 
   BookOpen, 
   CheckCircle,
   AlertCircle,
   RefreshCw,
   Edit,
-  MessageSquare
+  MessageSquare,
+  Lightbulb
 } from 'lucide-react';
 
 const GoalSetting: React.FC = () => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const { userData } = useAuth();
   
   // Core state
@@ -36,7 +40,8 @@ const GoalSetting: React.FC = () => {
     phase_id: '',
     topic_id: '',
     goal_text: '',
-    target_percentage: 80
+    target_percentage: 80,
+    goal_date: new Date()
   });
   
   // UI state
@@ -50,6 +55,24 @@ const GoalSetting: React.FC = () => {
     topicsCount: 0, 
     isSeeded: false 
   });
+  // SMART feedback state
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [feedback, setFeedback] = useState('');
+  const [feedbackError, setFeedbackError] = useState('');
+  const [feedbackHtml, setFeedbackHtml] = useState('');
+  // Toast state
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+
+  // Convert markdown to sanitized HTML using marked + DOMPurify
+  const markdownToHtml = (md: string) => {
+    if (!md) return '';
+    const raw = marked.parse(md);
+    // DOMPurify expects a DOM; in SSR contexts this can fail. This app runs in the browser.
+    const clean = DOMPurify.sanitize(raw);
+    return clean;
+  };
 
   // Load initial data
   const loadInitialData = useCallback(async () => {
@@ -112,7 +135,8 @@ const GoalSetting: React.FC = () => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'target_percentage' ? Number(value) : value
+      [name]: name === 'target_percentage' ? Number(value) : 
+              name === 'goal_date' ? new Date(value) : value
     }));
   };
 
@@ -138,7 +162,7 @@ const GoalSetting: React.FC = () => {
           ...formData,
           student_id: userData?.id || '',
           status: 'pending',
-          created_at: new Date()
+          created_at: formData.goal_date || new Date()
         });
       }
       
@@ -251,20 +275,19 @@ const GoalSetting: React.FC = () => {
       </div>
 
       <div className="mt-2">
-        <label htmlFor="target_percentage" className="block text-sm font-medium text-gray-700 mb-2">
-          Target Achievement Level (%) <span className="text-red-500">*</span>
+        <label htmlFor="goal_date" className="block text-sm font-medium text-gray-700 mb-2">
+          Goal Date <span className="text-red-500">*</span>
         </label>
         <input
-          type="number"
-          id="target_percentage"
-          name="target_percentage"
-          min="0"
-          max="100"
-          value={formData.target_percentage}
+          type="date"
+          id="goal_date"
+          name="goal_date"
+          value={formData.goal_date ? formData.goal_date.toISOString().split('T')[0] : ''}
           onChange={handleInputChange}
-          className="block w-32 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          className="block w-48 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           required
         />
+        <p className="text-xs text-gray-500 mt-1">Select the date for this goal (defaults to today)</p>
       </div>
 
       <div className="flex justify-end">
@@ -284,7 +307,7 @@ const GoalSetting: React.FC = () => {
     <div className="bg-white rounded-lg shadow-sm p-6">
       <div className="flex justify-between items-start">
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 mb-1">Today's Goal</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-1">Set Learning Goal</h3>
           <p className="text-gray-600 mb-4">{todaysGoal?.goal_text}</p>
           
           <div className="flex items-center space-x-2 text-sm text-gray-500">
@@ -351,7 +374,8 @@ const GoalSetting: React.FC = () => {
   );
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <React.Fragment>
+      <div className="max-w-2xl mx-auto">
       <div className="bg-white shadow-sm rounded-lg relative">
         {isLoading && (
           <div className="absolute top-0 left-0 right-0">
@@ -370,11 +394,88 @@ const GoalSetting: React.FC = () => {
             </div>
             <div>
               <h1 className="text-xl font-semibold text-gray-900">
-                {isEditing ? 'Update Today\'s Goal' : 'Daily Learning Goal'}
+                {isEditing ? "Update Goal" : 'Set Learning Goal'}
               </h1>
               <p className="text-sm text-gray-500">
                 {isEditing ? 'Modify your learning objective for today' : 'Track and reflect on your daily progress'}
               </p>
+            </div>
+            {/* AI Feedback Button */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mt-2">
+              {(!todaysGoal || isEditing) && (
+                <>
+                  <button
+                    type="button"
+                    className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 flex items-center gap-2"
+                    onClick={async () => {
+                      setShowFeedback(true);
+                      setFeedbackLoading(true);
+                      setFeedbackError('');
+                      setFeedback('');
+                      setFeedbackHtml('');
+                      try {
+                        if (!formData.goal_text) {
+                          setFeedbackError('Please enter your goal first.');
+                          setFeedbackLoading(false);
+                          return;
+                        }
+
+                        // Build structured context from selected phase/topic using detailedTopics
+                        const selectedTopic = topics.find(t => t.id === formData.topic_id);
+                        const selectedPhase = phases.find(p => p.id === formData.phase_id);
+                        let contextObj: any = { phase: selectedPhase?.name || 'General', topic: selectedTopic?.name || 'General' };
+                        try {
+                          if (selectedPhase && selectedTopic) {
+                            const phaseName = selectedPhase.name;
+                            const dt = (detailedTopics as any)[phaseName] as any[] | undefined;
+                            const topicDetails = dt ? dt.find(x => x.name === selectedTopic.name) : undefined;
+                            if (topicDetails) {
+                              contextObj.description = topicDetails.description;
+                              contextObj.keyTags = topicDetails.keyTags;
+                              contextObj.deliverable = topicDetails.deliverable;
+                            }
+                          }
+                        } catch (e) {
+                          // ignore context building errors and send minimal context
+                        }
+
+                        const response = await getSmartFeedback({
+                          goalText: formData.goal_text,
+                          apiKey: userData?.gemini_api_key || '',
+                          context: contextObj
+                        });
+
+                        const aiText = response.feedback || 'No feedback received.';
+                        setFeedback(aiText);
+                        const html = markdownToHtml(aiText);
+                        setFeedbackHtml(html);
+
+                        // Show notification if using fallback (no API key)
+                        if (response.provider === 'fallback') {
+                          setToastMessage('💡 Add your Gemini API key in profile settings for personalized AI feedback tailored to your curriculum!');
+                          setShowToast(true);
+                        }
+                      } catch (err: any) {
+                        setFeedbackError(err?.response?.data?.error || err.message || 'Failed to get feedback.');
+                      } finally {
+                        setFeedbackLoading(false);
+                      }
+                    }}
+                    disabled={!formData.goal_text || feedbackLoading}
+                    aria-label="Get SMART Feedback"
+                  >
+                    <Lightbulb className="h-4 w-4" />
+                    {feedbackLoading ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                        <span>Getting Feedback...</span>
+                      </>
+                    ) : (
+                      <span>Get SMART Feedback</span>
+                    )}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -439,6 +540,51 @@ const GoalSetting: React.FC = () => {
         </div>
       </div>
     </div>
+
+    {/* Slide-in drawer for AI-generated feedback (shown when feedback is requested) */}
+    {showFeedback && (
+      <>
+        {/* Backdrop */}
+        <div
+          className="fixed inset-0 bg-black bg-opacity-40 z-40"
+          onClick={() => setShowFeedback(false)}
+          aria-hidden
+        />
+
+        {/* Drawer */}
+        <aside className="fixed right-0 top-0 h-full w-96 bg-white z-50 shadow-xl transform transition-transform duration-300" role="dialog" aria-modal="true">
+          <div className="flex items-center justify-between p-4 border-b">
+            <h3 className="text-lg font-semibold text-purple-700">SMART Feedback</h3>
+            <button onClick={() => setShowFeedback(false)} className="text-gray-500 hover:text-gray-700" aria-label="Close feedback panel">✕</button>
+          </div>
+          <div className="p-4 overflow-y-auto h-[calc(100%-64px)]">
+            <div className="mb-4 text-sm text-gray-700">
+              <strong>SMART Hints</strong>
+              <ul className="list-disc pl-5 mt-2 text-xs text-gray-600">
+                <li><strong>S</strong>pecific: Is your goal clear and well-defined?</li>
+                <li><strong>M</strong>easurable: Can you track progress or completion?</li>
+                <li><strong>A</strong>chievable: Is it realistic given your resources?</li>
+                <li><strong>R</strong>elevant: Does it align with your learning objectives?</li>
+                <li><strong>T</strong>ime-bound: Is there a clear deadline or timeframe?</li>
+              </ul>
+            </div>
+
+            <div className="bg-gray-50 border border-gray-100 rounded p-3 text-gray-700 min-h-[120px]">
+              {feedbackError && <div className="text-red-600">{feedbackError}</div>}
+              {!feedback && !feedbackError && feedbackLoading && <div>Loading feedback...</div>}
+              {feedbackHtml && (
+                <div className="prose text-sm text-gray-800" dangerouslySetInnerHTML={{ __html: feedbackHtml }} />
+              )}
+              {!feedbackHtml && feedback && !feedbackError && (
+                <div className="text-sm text-gray-800"><em>{feedback}</em></div>
+              )}
+            </div>
+          </div>
+        </aside>
+      </>
+    )}
+    <Toast message={toastMessage} visible={showToast} onClose={() => setShowToast(false)} />
+    </React.Fragment>
   );
 };
 

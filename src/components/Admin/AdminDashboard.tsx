@@ -20,8 +20,9 @@ import {
   MessageSquare
 } from 'lucide-react';
 import BugReportAdminPanel from './BugReportAdminPanel';
+import AdminJourneyTracking from './AdminJourneyTracking';
 
-type TabType = 'overview' | 'users' | 'mentors' | 'super-mentors' | 'mentor-requests' | 'reports' | 'curriculum' | 'bug-reports';
+type TabType = 'overview' | 'users' | 'mentors' | 'super-mentors' | 'mentor-requests' | 'reports' | 'curriculum' | 'bug-reports' | 'journey-tracking';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -77,6 +78,7 @@ const AdminDashboard: React.FC = () => {
     { id: 'super-mentors' as TabType, label: 'Super Mentors', icon: Star },
     { id: 'mentor-requests' as TabType, label: 'Mentor Requests', icon: UserPlus },
     { id: 'reports' as TabType, label: 'Reports', icon: BarChart3 },
+    { id: 'journey-tracking' as TabType, label: 'Journey Tracking', icon: BarChart3 },
     { id: 'curriculum' as TabType, label: 'Curriculum', icon: Database },
     { id: 'bug-reports' as TabType, label: 'Bug Reports', icon: MessageSquare },
   ];
@@ -123,14 +125,14 @@ const AdminDashboard: React.FC = () => {
         {/* Tabs */}
         <div className="bg-white rounded-lg shadow mb-6">
           <div className="border-b border-gray-200">
-            <nav className="flex -mb-px">
+            <nav className="flex overflow-x-auto scrollbar-hide -mb-px">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex-1 sm:flex-none px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+                    className={`flex-shrink-0 px-3 sm:px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                       activeTab === tab.id
                         ? 'border-primary-600 text-primary-600'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -314,6 +316,12 @@ const AdminDashboard: React.FC = () => {
                   Detailed analytics and student reports will be available here
                 </p>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'journey-tracking' && (
+            <div className="p-6">
+              <AdminJourneyTracking />
             </div>
           )}
 

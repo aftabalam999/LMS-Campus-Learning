@@ -17,8 +17,7 @@ import {
   Award,
   Send,
   X,
-  Edit,
-  Save
+  Edit
 } from 'lucide-react';
 
 interface ReviewItem {

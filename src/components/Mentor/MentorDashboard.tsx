@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import MentorCampusTab from '../Admin/MentorCampusTab';
 import { SpinnerLoader } from '../Common/BoltLoaderComponent';
+import CampusJoiningDateModal from '../Common/CampusJoiningDateModal';
 
 type ViewTypeValues = 'my-goals' | 'my-mentees' | 'my-mentor' | 'campus-overview';
 
@@ -46,6 +47,13 @@ const MentorDashboard: React.FC = () => {
     totalStudents: 0
   });
   const [loading, setLoading] = useState(true);
+  const [showJoiningDateModal, setShowJoiningDateModal] = useState(false);
+
+  const handleJoiningDateUpdated = useCallback((updatedUser: User) => {
+    // Update the user data in auth context
+    // This will trigger a re-render and hide the modal
+    // The auth context should handle updating the user data
+  }, []);
 
   const loadDashboardData = useCallback(async () => {
     try {
@@ -54,6 +62,11 @@ const MentorDashboard: React.FC = () => {
       if (!userData?.id) {
         navigate('/dashboard');
         return;
+      }
+
+      // Check if user needs to set joining date
+      if (!userData.campus_joining_date && !userData.isAdmin) {
+        setShowJoiningDateModal(true);
       }
 
       // Load all data in parallel
@@ -223,15 +236,16 @@ const MentorDashboard: React.FC = () => {
   // }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-              <p className="mt-2 text-gray-600">Welcome back, {userData?.name}</p>
-            </div>
+    <>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="bg-white shadow rounded-lg">
+          <div className="px-6 py-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+                <p className="mt-2 text-gray-600">Welcome back, {userData?.name}</p>
+              </div>
             {getTotalPendingReviews() > 0 && (
               <div className="flex items-center space-x-2 px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <Bell className="h-5 w-5 text-yellow-600 animate-pulse" />
@@ -563,6 +577,17 @@ const MentorDashboard: React.FC = () => {
         </div>
       )}
     </div>
+
+    {/* Campus Joining Date Modal */}
+    {userData && (
+      <CampusJoiningDateModal
+        isOpen={showJoiningDateModal}
+        onClose={() => setShowJoiningDateModal(false)}
+        user={userData}
+        onDateUpdated={handleJoiningDateUpdated}
+      />
+    )}
+    </>
   );
 };
 

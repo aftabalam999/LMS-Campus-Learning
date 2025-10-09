@@ -1,5 +1,4 @@
 import { PhaseService, TopicService } from './dataServices';
-import { initialPhases, initialTopics } from '../data/initialData';
 
 export class DataSeedingService {
   static async seedInitialData(): Promise<boolean> {
@@ -53,11 +52,11 @@ export class DataSeedingService {
         }
         // For phase3-7 files, use exported array
         const phaseMap = [
-          { arr: phaseFile.phase3Topics, name: 'Phase 3: Interactive Quiz Master', order: 3 },
-          { arr: phaseFile.phase4Topics, name: 'Phase 4: AI-Powered Content Generator', order: 4 },
-          { arr: phaseFile.phase5Topics, name: 'Phase 5: Ask Gemini Web App', order: 5 },
-          { arr: phaseFile.phase6Topics, name: 'Phase 6: Student Feedback Manager', order: 6 },
-          { arr: phaseFile.phase7Topics, name: 'Phase 7: CollabSphere', order: 7 }
+          { arr: phaseFile.phase3Topics, name: 'Phase 3: Interactive Quiz Master', order: 4 },
+          { arr: phaseFile.phase4Topics, name: 'Phase 4: AI-Powered Content Generator', order: 5 },
+          { arr: phaseFile.phase5Topics, name: 'Phase 5: Ask Gemini Web App', order: 6 },
+          { arr: phaseFile.phase6Topics, name: 'Phase 6: Student Feedback Manager', order: 7 },
+          { arr: phaseFile.phase7Topics, name: 'Phase 7: CollabSphere', order: 8 }
         ];
         for (const { arr, name, order } of phaseMap) {
           if (arr && arr.length > 0) {

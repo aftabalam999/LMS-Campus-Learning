@@ -12,6 +12,7 @@ import Dashboard from './components/Common/Dashboard';
 import StudentDashboard from './components/Student/StudentDashboard';
 import GoalSetting from './components/Student/GoalSetting';
 import ReflectionSubmission from './components/Student/ReflectionSubmission';
+import StudentJourney from './components/Student/StudentJourney';
 
 // Mentor Components
 import MentorDashboard from './components/Mentor/MentorDashboard';
@@ -167,10 +168,7 @@ function App() {
             <Route path="/journey" element={
               <ProtectedRoute>
                 <Layout>
-                  <div className="text-center py-12">
-                    <h2 className="text-2xl font-bold text-gray-900">Learning Journey</h2>
-                    <p className="text-gray-600 mt-2">Coming Soon...</p>
-                  </div>
+                  <StudentJourney />
                 </Layout>
               </ProtectedRoute>
             } />

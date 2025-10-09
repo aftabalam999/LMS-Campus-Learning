@@ -22,22 +22,40 @@ export const initialPhases: Omit<Phase, 'id' | 'created_at'>[] = [
     isSenior: true
   },
   {
-    name: 'Phase 0: Foundation',
-    start_date: new Date('2024-09-01'),
-    end_date: new Date('2024-10-26'),
+    name: 'Induction: Life Skills and Culture',
+    start_date: new Date('2024-08-01'),
+    end_date: new Date('2024-08-31'),
     order: 0
+  },
+  {
+    name: 'Induction Learning',
+    start_date: new Date('2024-09-01'),
+    end_date: new Date('2024-09-15'),
+    order: 0
+  },
+  {
+    name: 'Phase 0: Foundation',
+    start_date: new Date('2024-09-16'),
+    end_date: new Date('2024-10-26'),
+    order: 1
   },
   {
     name: 'Phase 1: Student Profile & Course Portal (HTML Only)',
     start_date: new Date('2024-10-27'),
     end_date: new Date('2024-11-30'),
-    order: 1
+    order: 2
   },
   {
     name: 'Phase 2: Styling & Responsive Design',
     start_date: new Date('2024-12-01'),
     end_date: new Date('2024-12-31'),
-    order: 2
+    order: 3
+  },
+  {
+    name: 'Self Learning Space',
+    start_date: new Date('2024-01-01'),
+    end_date: new Date('2025-12-31'),
+    order: -1
   }
 ];
 
@@ -83,6 +101,257 @@ export const detailedTopics: { [phaseName: string]: TopicDetails[] } = {
       icon: '⚛️',
       technologies: ['React', 'Mentor Guidance'],
       description: 'Intensive React bootcamp for advanced students.'
+    }
+  ],
+  'Induction: Life Skills and Culture': [
+    {
+      name: 'NavGurukul Community & Values',
+      order: 1,
+      maxTime: 180,
+      keyTags: ['Community', 'Values', 'Culture', 'Belonging', 'Contribution'],
+      deliverable: 'Complete community orientation activities and reflection journal',
+      icon: '🤝',
+      technologies: ['Community Engagement', 'Reflection'],
+      description: `Here you will learn what it truly means to be a part of the NavGurukul community.
+Through different quests, you'll explore how our campuses function, what values guide us, and how you can contribute meaningfully to your learning journey and to others around you.
+
+**Learning Objectives:**
+• Understand NavGurukul's mission and values
+• Learn about campus systems (councils, houses, recognition)
+• Explore your role in the community
+• Practice contributing to group activities`
+    },
+    {
+      name: 'Communication & Collaboration',
+      order: 2,
+      maxTime: 240,
+      keyTags: ['Communication', 'Collaboration', 'Teamwork', 'Active Listening', 'Feedback'],
+      deliverable: 'Complete group activities and peer feedback exercises',
+      icon: '💬',
+      technologies: ['Group Work', 'Presentation Skills'],
+      description: `Learn to communicate confidently and work effectively with your peers.
+Practice active listening, giving and receiving feedback, and collaborating on projects.
+
+**Learning Objectives:**
+• Develop confident communication skills
+• Learn effective collaboration techniques
+• Practice active listening and feedback
+• Build healthy peer relationships`
+    },
+    {
+      name: 'Personal Development & Routines',
+      order: 3,
+      maxTime: 180,
+      keyTags: ['Personal Growth', 'Habits', 'Routine', 'Self-Reflection', 'Goal Setting'],
+      deliverable: 'Create personal development plan and establish daily routines',
+      icon: '🌱',
+      technologies: ['Self-Reflection', 'Goal Setting'],
+      description: `Build healthy routines and understand personal development.
+Learn to reflect on your emotions, set personal goals, and maintain productive habits.
+
+**Learning Objectives:**
+• Build healthy daily routines
+• Practice emotional self-awareness
+• Set personal development goals
+• Develop self-reflection habits`
+    },
+    {
+      name: 'Digital Tools & Creative Expression',
+      order: 4,
+      maxTime: 240,
+      keyTags: ['Digital Literacy', 'AI Tools', 'Creative Expression', 'Technology', 'Documentation'],
+      deliverable: 'Create digital portfolio and demonstrate tool usage',
+      icon: '💻',
+      technologies: ['ChatGPT', 'Gemini', 'Google Docs', 'PartyRock', 'Digital Tools'],
+      description: `Start using modern digital tools to express your ideas creatively.
+Learn to use ChatGPT, Gemini, Google Docs, and PartyRock for various tasks.
+
+**Learning Objectives:**
+• Learn digital tool basics
+• Practice creative expression with AI
+• Use documentation tools effectively
+• Create digital content and portfolios`
+    },
+    {
+      name: 'Leadership & Community Shaping',
+      order: 5,
+      maxTime: 180,
+      keyTags: ['Leadership', 'Community Building', 'Initiative', 'Responsibility', 'Impact'],
+      deliverable: 'Lead a community activity and reflect on leadership experience',
+      icon: '👑',
+      technologies: ['Leadership Activities', 'Community Projects'],
+      description: `By the end of this phase, you'll not only understand how things work at NavGurukul, but also how you can shape them — becoming an active, thoughtful, and confident member of our community.
+
+**Learning Objectives:**
+• Understand leadership roles and responsibilities
+• Learn to initiate and lead activities
+• Contribute to community improvement
+• Develop confidence in community participation`
+    }
+  ],
+  'Induction Learning': [
+    {
+      name: 'Quest 1: Learning How to Learn',
+      order: 1,
+      maxTime: 360,
+      keyTags: ['Learning Methodology', 'Metacognition', 'Practice', 'Reflection', 'Experiential Learning'],
+      deliverable: 'Complete origami activity, laptop exploration, and self-learning challenges',
+      icon: '🧠',
+      technologies: ['Visual Learning', 'Hands-on Practice', 'Self-Learning'],
+      description: `**Quest 1: Learning How to Learn**
+
+**Step 1: Visual Learning**
+• Learning through seeing instead of only instructions
+• Group activity: Follow facilitator guide for origami
+• Realize how visual demonstration + practice improves understanding
+
+**Step 2: Laptop Hackathon**
+• Learning by doing yourself (Mohit cleaning laptop story)
+• Identify laptop parts, make short fun video explaining them
+• Learn technical skills + gain confidence through hands-on experience
+
+**Step 3: Self-Learning Challenge**
+• Learning like a child – discover through exploration
+• Office tools tasks using Google, YouTube, ChatGPT
+• Practice self-learning and problem-solving independently
+
+**Learning Outcome:** Understand "learning by doing" and metacognition. Learn how practice, observation, and reflection help you learn anything.`
+    },
+    {
+      name: 'Learning How the Brain Works',
+      order: 2,
+      maxTime: 120,
+      keyTags: ['Neuroplasticity', 'Brain Science', 'Learning Psychology', 'Practice Makes Permanent'],
+      deliverable: 'Watch and discuss neuroplasticity videos, reflect on learning process',
+      icon: '🧬',
+      technologies: ['Video Learning', 'Discussion', 'Reflection'],
+      description: `**Learning How the Brain Works**
+
+**Story:** Aarti's English speech story – practice makes permanent
+
+**Activity:** Watch 2 short videos on neuroplasticity
+• YouTube: "How Your Brain Works" (5d71xhEbjDg)
+• YouTube: "Neuroplasticity Explained" (F31nAJR-IiI)
+
+**Learning Outcome:** Understand how mistakes, visuals, and practice shape learning. Discover how the brain adapts and grows through experience.`
+    },
+    {
+      name: 'Quest 2: AI as a Friend',
+      order: 3,
+      maxTime: 300,
+      keyTags: ['AI Tools', 'Technology', 'Creative Expression', 'Digital Literacy'],
+      deliverable: 'Complete 9 AI-powered challenges using various AI tools',
+      icon: '🤖',
+      technologies: ['ChatGPT', 'Perplexity', 'Canva', 'Podcastle', 'PartyRock', 'Gemini Voice'],
+      description: `**Quest 2: AI as a Friend**
+
+**Challenge:** AI tools help you learn faster and more creatively
+
+**Activities:**
+• Complete 9 AI-powered challenges
+• Use ChatGPT, Perplexity, Canva, Podcastle, PartyRock, Gemini Voice
+• Explore different AI applications for learning and creation
+
+**Learning Outcome:** Learn to use AI tools effectively for tasks and self-expression. Discover how AI can enhance your learning journey.`
+    },
+    {
+      name: 'Quest 3: Hackathon – Build Your Portfolio',
+      order: 4,
+      maxTime: 480,
+      keyTags: ['Coding', 'Creativity', 'Teamwork', 'Portfolio Development', 'Project Building'],
+      deliverable: 'Create app, website, or tool within time limit and present to group',
+      icon: '💻',
+      technologies: ['Coding', 'Project Development', 'Team Collaboration'],
+      description: `**Quest 3: Hackathon – Build Your Portfolio**
+
+**Challenge:** Coding marathon – creativity + teamwork
+
+**Activity:** Create app, website, or tool within time constraints
+• Work individually or in teams
+• Focus on creativity and problem-solving
+• Build something meaningful to showcase
+
+**Learning Outcome:** Hands-on coding experience + portfolio creation. Develop teamwork skills and project management abilities.`
+    },
+    {
+      name: 'Quest 4: Hackathon Reflection',
+      order: 5,
+      maxTime: 180,
+      keyTags: ['Reflection', 'Peer Learning', 'Communication', 'Code Review', 'Problem Solving'],
+      deliverable: 'Explain your code to a partner and document learnings using reflection chart',
+      icon: '📝',
+      technologies: ['Peer Teaching', 'Reflection', 'Documentation'],
+      description: `**Quest 4: Hackathon Reflection**
+
+**Challenge:** Reflection strengthens learning
+
+**Activity:** 
+• Explain your code to a partner and understand theirs
+• Use reflection chart template to document insights
+• Discuss challenges faced and solutions found
+
+**Learning Outcome:** Learn peer-learning techniques. Improve communication and problem-solving skills through collaborative reflection.`
+    },
+    {
+      name: 'Quest 5: Coding Journey – 5 Challenges',
+      order: 6,
+      maxTime: 300,
+      keyTags: ['Coding', 'Problem Solving', 'Persistence', 'Incremental Learning', 'Programming Mindset'],
+      deliverable: 'Complete 5 coding challenges using MakeCode or Code.org platforms',
+      icon: '🎯',
+      technologies: ['MakeCode', 'Code.org', 'Block Coding', 'Visual Programming'],
+      description: `**Quest 5: Coding Journey – 5 Challenges**
+
+**Challenge:** Coding is a learning journey
+
+**Activity:** Complete 5 coding challenges
+• Use MakeCode or Code.org platforms
+• Focus on fundamental programming concepts
+• Build persistence and problem-solving skills
+
+**Learning Outcome:** Develop coding mindset, persistence, and incremental learning. Experience the journey of becoming a programmer.`
+    },
+    {
+      name: 'Quest 6: Ek Din Ka Sach – Daily Growth',
+      order: 7,
+      maxTime: 240,
+      keyTags: ['Daily Routine', 'Self-Discipline', 'Language Learning', 'Personal Growth', 'Planning'],
+      deliverable: 'Maintain daily routine: exercise, planning, coding practice, and English speaking',
+      icon: '📅',
+      technologies: ['Exercise', 'Time Management', 'Language Practice', 'Goal Setting'],
+      description: `**Quest 6: Ek Din Ka Sach – Daily Growth**
+
+**Challenge:** Learn from your day, plan smartly
+
+**Daily Activities:**
+• Morning exercise routine
+• Smart day planning and time management
+• Regular coding practice
+• English speaking practice
+
+**Learning Outcome:** Build daily routine, self-discipline, reflection habit, and language skills. Develop sustainable learning practices.`
+    },
+    {
+      name: 'Reflection Time: Din Khatam',
+      order: 8,
+      maxTime: 120,
+      keyTags: ['Metacognition', 'Mindfulness', 'Self-Reflection', 'Learning from Experience', 'Meditation'],
+      deliverable: 'Complete end-of-day reflection questions and meditation practice',
+      icon: '🧘',
+      technologies: ['Reflection', 'Meditation', 'Mindfulness', 'Self-Assessment'],
+      description: `**Reflection Time: Din Khatam**
+
+**Challenge:** End-of-day reflection for continuous growth
+
+**Activity:** Answer reflective questions on:
+• What did you learn today?
+• What challenges did you face?
+• What goals did you achieve?
+• How can you improve tomorrow?
+
+**Bonus:** Vipassana meditation practice for mindfulness
+
+**Learning Outcome:** Enhance metacognition, mindfulness, and ability to learn from experiences. Develop reflective thinking habits.`
     }
   ],
   'Phase 0: Foundation': [
@@ -681,6 +950,42 @@ export const detailedTopics: { [phaseName: string]: TopicDetails[] } = {
       icon: '🎉',
       technologies: ['Full-Stack Development', 'AI Integration', 'Deployment'],
       description: 'Consolidate all features, demonstrate end-to-end functionality, deployment readiness.'
+    }
+  ],
+  'Self Learning Space': [
+    {
+      name: 'Exam Preparation',
+      order: 1,
+      maxTime: 480, // 8 hours
+      keyTags: ['Self-Study', 'Exam Prep', 'Knowledge Assessment', 'Study Skills'],
+      deliverable: 'Personal study plan and exam preparation goals',
+      icon: '📚',
+      technologies: ['Study Materials', 'Practice Tests', 'Self-Reflection'],
+      description: `Dedicated space for exam preparation and knowledge assessment.
+Focus on building study habits, taking practice exams, and tracking your learning progress.
+
+**Learning Objectives:**
+• Develop effective study strategies
+• Practice exam-taking skills
+• Track personal learning progress
+• Build confidence through preparation`
+    },
+    {
+      name: 'Job Preparation',
+      order: 2,
+      maxTime: 480, // 8 hours
+      keyTags: ['Career Development', 'Job Search', 'Resume Building', 'Interview Skills'],
+      deliverable: 'Job application materials and career development plan',
+      icon: '💼',
+      technologies: ['Resume Writing', 'LinkedIn', 'Interview Practice', 'Networking'],
+      description: `Prepare for job opportunities and career advancement.
+Build your professional profile, practice interviews, and develop job search strategies.
+
+**Learning Objectives:**
+• Create compelling resumes and portfolios
+• Practice interview techniques
+• Learn job search strategies
+• Build professional networking skills`
     }
   ]
 };

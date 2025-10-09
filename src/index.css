@@ -28,6 +28,15 @@ body {
       @apply px-2 py-3 text-xs;
     }
   }
+
+  /* Hide scrollbar for horizontal scrolling navigation */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Safari and Chrome */
+  }
 }
 
 code {

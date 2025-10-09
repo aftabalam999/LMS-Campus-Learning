@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, User, Building, Home, Code, CheckCircle } from 'lucide-react';
+import { User, Building, Home, Code, CheckCircle } from 'lucide-react';
+import Toast from './Toast';
 import { User as UserType } from '../../types';
 import { UserService } from '../../services/firestore';
 
@@ -15,6 +16,7 @@ interface ProfileFormData {
   campus: UserType['campus'] | '';
   house: UserType['house'] | '';
   skills: string[];
+  gemini_api_key?: string;
 }
 
 const CAMPUS_OPTIONS: UserType['campus'][] = [
@@ -52,7 +54,8 @@ export default function ProfileCompletionModal({
     name: user.name || '',
     campus: user.campus || '',
     house: user.house || '',
-    skills: user.skills || []
+    skills: user.skills || [],
+    gemini_api_key: user.gemini_api_key || ''
   });
 
   const [skillInput, setSkillInput] = useState('');
@@ -63,10 +66,12 @@ export default function ProfileCompletionModal({
   if (!user.campus) missingFields.push('campus');
   if (!user.house) missingFields.push('house');
   
-  // Add optional skills step only if user hasn't provided skills yet
+  // Add optional skills and Gemini key steps if not provided
   const hasNoSkills = !user.skills || user.skills.length === 0;
-  const optionalSteps = hasNoSkills ? ['skills'] : [];
-  
+  const optionalSteps = [];
+  if (hasNoSkills) optionalSteps.push('skills');
+  optionalSteps.push('gemini_api_key'); // Always allow Gemini key step (optional)
+
   const totalSteps = Math.max(1, missingFields.length + optionalSteps.length);
 
   const getCurrentStepField = () => {
@@ -74,6 +79,10 @@ export default function ProfileCompletionModal({
       return missingFields[currentStep - 1];
     } else if (currentStep === missingFields.length + 1 && hasNoSkills) {
       return 'skills';
+    } else if (
+      currentStep === missingFields.length + (hasNoSkills ? 2 : 1)
+    ) {
+      return 'gemini_api_key';
     } else {
       return 'complete';
     }
@@ -121,25 +130,29 @@ export default function ProfileCompletionModal({
     setIsLoading(true);
     try {
       const updates: Partial<UserType> = {};
-      
       // Update required fields
       if (missingFields.includes('name')) updates.name = formData.name;
       if (missingFields.includes('campus')) updates.campus = formData.campus as UserType['campus'];
       if (missingFields.includes('house')) updates.house = formData.house as UserType['house'];
-      
       // Update skills if user has added any (optional)
       if (formData.skills.length > 0) {
         updates.skills = formData.skills;
       }
-
+      // Update Gemini API key if provided (optional)
+      if (formData.gemini_api_key && formData.gemini_api_key.trim().length > 0) {
+        updates.gemini_api_key = formData.gemini_api_key.trim();
+      }
       await UserService.updateUser(user.id, updates);
-
       const updatedUser = { ...user, ...updates };
       onProfileUpdated(updatedUser);
-      onClose();
+      // show a small toast and then close
+      setToast({ visible: true, message: 'Profile saved', type: 'success' });
+      setTimeout(() => {
+        onClose();
+      }, 800);
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert('Failed to update profile. Please try again.');
+      setToast({ visible: true, message: 'Failed to update profile', type: 'error' });
     } finally {
       setIsLoading(false);
     }
@@ -152,6 +165,7 @@ export default function ProfileCompletionModal({
       case 'campus': return formData.campus !== '';
       case 'house': return formData.house !== '';
       case 'skills': return true; // Skills are optional, always valid
+      case 'gemini_api_key': return true; // Optional, always valid
       case 'complete': return true;
       default: return false;
     }
@@ -355,6 +369,40 @@ export default function ProfileCompletionModal({
           </div>
         );
 
+      case 'gemini_api_key':
+        return (
+          <div className="text-center">
+            <User className="w-12 h-12 text-purple-600 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Gemini API Key <span className="text-sm font-normal text-gray-500">(Optional)</span>
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Add your Gemini API key to enable AI-powered SMART goal feedback. Get your free API key from Google AI Studio.
+            </p>
+            <input
+              type="text"
+              value={formData.gemini_api_key || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, gemini_api_key: e.target.value }))}
+              placeholder="Paste your Gemini API key here"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-center text-lg"
+            />
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800 mb-2">
+                <strong>How to get your Gemini API key:</strong>
+              </p>
+              <ol className="text-sm text-blue-800 list-decimal list-inside space-y-1">
+                <li>Go to <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-600">Google AI Studio</a></li>
+                <li>Sign in with your Google account</li>
+                <li>Click "Create API key"</li>
+                <li>Copy the generated key (starts with "AIza...")</li>
+                <li>Paste it here</li>
+              </ol>
+              <p className="text-xs text-blue-700 mt-2">
+                Note: This is different from your Firebase API key. Make sure to get it from Google AI Studio.
+              </p>
+            </div>
+          </div>
+        );
       case 'complete':
         return (
           <div className="text-center">
@@ -380,7 +428,10 @@ export default function ProfileCompletionModal({
                 {formData.skills.length > 0 && (
                   <li>• Skills: {formData.skills.join(', ')}</li>
                 )}
-                {missingFields.length === 0 && formData.skills.length === 0 && (
+                {formData.gemini_api_key && (
+                  <li>• Gemini API Key: <span className="text-xs text-gray-500">(Saved)</span></li>
+                )}
+                {missingFields.length === 0 && formData.skills.length === 0 && !formData.gemini_api_key && (
                   <li className="text-gray-500 italic">No updates needed - profile is complete!</li>
                 )}
               </ul>
@@ -393,6 +444,8 @@ export default function ProfileCompletionModal({
     }
   };
 
+  const [toast, setToast] = useState({ visible: false, message: '', type: 'info' });
+
   if (!isOpen || missingFields.length === 0) return null;
 
   return (
@@ -404,10 +457,11 @@ export default function ProfileCompletionModal({
             Complete Your Profile
           </h2>
           <button
-            onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded-md"
+            onClick={handleComplete}
+            className="px-3 py-1 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+            disabled={isLoading}
           >
-            <X size={20} className="text-gray-500" />
+            {isLoading ? 'Saving...' : 'Save profile'}
           </button>
         </div>
 
@@ -466,6 +520,12 @@ export default function ProfileCompletionModal({
             </div>
           )}
         </div>
+        <Toast
+          visible={toast.visible}
+          message={toast.message}
+          type={toast.type as any}
+          onClose={() => setToast({ visible: false, message: '', type: 'info' })}
+        />
       </div>
     </div>
   );

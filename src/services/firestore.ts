@@ -330,4 +330,13 @@ export class UserService extends FirestoreService {
       throw error;
     }
   }
+
+  static async getUsersByHouse(house: string): Promise<User[]> {
+    try {
+      return await this.getWhere<User>(COLLECTIONS.USERS, 'house', '==', house);
+    } catch (error) {
+      console.error('Error fetching users by house:', error);
+      throw error;
+    }
+  }
 }

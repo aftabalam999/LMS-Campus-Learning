@@ -17,10 +17,12 @@ export interface User {
   status?: 'active' | 'inactive' | 'dropout' | 'placed' | 'on_leave';  // User's current status
   leave_from?: Date;  // Start date of leave period
   leave_to?: Date;    // End date of leave period
+  campus_joining_date?: Date; // Date when student joined the campus
   deleted_at?: Date;  // Soft delete timestamp
   created_at: Date;
   updated_at: Date;
   role?: 'admin' | 'super_mentor' | 'mentor';  // Role of the user
+  gemini_api_key?: string; // Optional Gemini API key for AI feedback
 }
 
 // Phase interface
@@ -183,6 +185,7 @@ export interface GoalFormData {
   topic_id: string;
   goal_text: string;
   target_percentage: number;
+  goal_date?: Date;
 }
 
 export interface PairProgrammingFormData {
