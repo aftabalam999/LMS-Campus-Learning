@@ -7,7 +7,8 @@ import {
   onAuthStateChanged,
   User as FirebaseUser
 } from 'firebase/auth';
-import { auth } from './firebase';
+import { auth, db } from './firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { UserService } from './firestore';
 import { User } from '../types';
 
@@ -20,7 +21,7 @@ export class AuthService {
       this.googleProvider.addScope('email');
       this.googleProvider.addScope('profile');
       
-      // Set custom parameters to help with CORS issues
+      // Set custom parameters for OAuth with minimal configuration
       this.googleProvider.setCustomParameters({
         prompt: 'select_account'
       });
@@ -31,8 +32,32 @@ export class AuthService {
   // Sign in with Google using popup (primary method)
   static async signInWithGoogle(): Promise<FirebaseUser> {
     try {
+      // First try popup
       const userCredential = await signInWithPopup(auth, this.getGoogleProvider());
-      return await this.handleGoogleSignInResult(userCredential.user);
+      
+      try {
+        // Try to get existing user document
+        const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
+        
+        if (!userDoc.exists()) {
+          // Create new user document if it doesn't exist
+          await setDoc(doc(db, 'users', userCredential.user.uid), {
+            id: userCredential.user.uid,
+            email: userCredential.user.email || '',
+            displayName: userCredential.user.displayName || '',
+            photoURL: userCredential.user.photoURL || '',
+            role: 'student', // Default role
+            createdAt: new Date().toISOString(),
+            lastLogin: new Date().toISOString()
+          });
+        }
+
+        return await this.handleGoogleSignInResult(userCredential.user);
+      } catch (dbError: any) {
+        console.error('Error handling user data:', dbError);
+        // Still return the user even if database operations fail
+        return userCredential.user;
+      }
     } catch (error: any) {
       console.error('Error signing in with Google popup:', error);
       

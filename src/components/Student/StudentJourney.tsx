@@ -1,7 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-// import { GoalService, ReflectionService, PhaseService, TopicService } from '../../services/dataServices';
-import { Phase, Topic } from '../../types';
+import { FirestoreService, COLLECTIONS } from '../../services/firestore';
+import { Phase, Topic, DailyGoal, DailyReflection, User } from '../../types';
+import { UserSelector } from '../Common/UserSelector';
+import { CampusFilter } from '../Common/CampusFilter';
+import type { Campus } from '../Common/CampusFilter';
 import { TrendingUp, BookOpen, Target, Award, Calendar } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -111,8 +114,6 @@ const calculatePhaseDurations = (phaseProgress: PhaseProgress[], campusJoiningDa
 const calculateHouseAverages = async (house: string, allPhases: Phase[]): Promise<HouseAverageData[]> => {
   try {
     const { UserService } = await import('../../services/firestore');
-    const GoalService = (await import('../../services/dataServices')).GoalService;
-    const ReflectionService = (await import('../../services/dataServices')).ReflectionService;
 
     // Get all students in the house
     const houseStudents = await UserService.getUsersByHouse(house);
@@ -132,8 +133,13 @@ const calculateHouseAverages = async (house: string, allPhases: Phase[]): Promis
         if (!student.campus_joining_date) continue;
 
         // Get student's goals for this phase
-        const studentGoals = await GoalService.getGoalsByStudent(student.id);
-        const phaseGoals = studentGoals.filter(goal => goal.phase_id === phase.id);
+        const studentGoals = await FirestoreService.getWhere<DailyGoal>(
+          COLLECTIONS.DAILY_GOALS,
+          'student_id',
+          '==',
+          student.id
+        );
+        const phaseGoals = studentGoals.filter((goal: DailyGoal) => goal.phase_id === phase.id);
 
         if (phaseGoals.length === 0) continue;
 
@@ -144,12 +150,18 @@ const calculateHouseAverages = async (house: string, allPhases: Phase[]): Promis
         } else {
           // Find completion date of previous phase
           const prevPhase = filteredPhases[i - 1];
-          const prevPhaseGoals = studentGoals.filter(goal => goal.phase_id === prevPhase.id);
+          const prevPhaseGoals = studentGoals.filter((goal: DailyGoal) => goal.phase_id === prevPhase.id);
 
           let prevPhaseEndDate: Date | null = null;
           for (const goal of prevPhaseGoals) {
             try {
-              const reflection = await ReflectionService.getReflectionByGoal(goal.id);
+              const reflections = await FirestoreService.getWhere<DailyReflection>(
+                COLLECTIONS.DAILY_REFLECTIONS,
+                'goal_id',
+                '==',
+                goal.id
+              );
+              const reflection = reflections[0];
               if (reflection && reflection.achieved_percentage === 100) {
                 const completionDate = new Date(reflection.created_at);
                 if (!prevPhaseEndDate || completionDate > prevPhaseEndDate) {
@@ -170,7 +182,13 @@ const calculateHouseAverages = async (house: string, allPhases: Phase[]): Promis
 
         for (const goal of phaseGoals) {
           try {
-            const reflection = await ReflectionService.getReflectionByGoal(goal.id);
+            const reflections = await FirestoreService.getWhere<DailyReflection>(
+              COLLECTIONS.DAILY_REFLECTIONS,
+              'goal_id',
+              '==',
+              goal.id
+            );
+            const reflection = reflections[0];
             if (reflection && reflection.achieved_percentage === 100) {
               const completionDate = new Date(reflection.created_at);
               if (completionDate > endDate || !hasCompletedTopics) {
@@ -229,41 +247,87 @@ const combineChartData = (studentData: PhaseDurationData[], houseData: HouseAver
 const StudentJourney: React.FC = () => {
   const { userData } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [loadingStage, setLoadingStage] = useState<string>('');
   const [phaseProgress, setPhaseProgress] = useState<PhaseProgress[]>([]);
   const [error, setError] = useState('');
   const [allPhases, setAllPhases] = useState<Phase[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [selectedUserData, setSelectedUserData] = useState<User | null>(null);
+  const [selectedCampus, setSelectedCampus] = useState<Campus>('All');
   const [combinedChartData, setCombinedChartData] = useState<CombinedChartData[]>([]);
+
+  const handleCampusSelect = (campus: Campus) => {
+    setSelectedCampus(campus);
+    setSelectedUserId('');
+    setSelectedUserData(null);
+  };
+
+  const handleUserSelect = async (userId: string) => {
+    setSelectedUserId(userId);
+    if (userId) {
+      try {
+        const users = await FirestoreService.getWhere<User>(COLLECTIONS.USERS, 'id', '==', userId);
+        const user = users[0];
+        setSelectedUserData(user);
+      } catch (error) {
+        console.error('Error fetching selected user:', error);
+      }
+    } else {
+      setSelectedUserData(null);
+    }
+  };
 
   const loadJourneyData = useCallback(async () => {
     if (!userData?.id) return;
 
     try {
       setLoading(true);
-      console.log('Starting to load journey data...');
+      console.log('Starting journey data load...');
+      
+      // Determine which user's data to load
+      const targetUserId = selectedUserId || userData.id;
+      console.log('Loading data for user:', targetUserId);
+      setLoadingStage('Gathering your learning journey data...');
+      console.log('Starting to load real journey data...');
 
-      // Skip Firestore entirely, use local data directly
-      console.log('Using local curriculum data...');
+      // Load foundation data (phases and topics structure)
       const { initialPhases, detailedTopics } = await import('../../data/initialData');
+      console.log('Loaded initial data:', { initialPhases, detailedTopics });
+      
       const phases: Phase[] = initialPhases.map((phase, index) => ({
-        id: `local-${index}`,
+        id: `phase-${phase.order}`,
         name: phase.name,
         order: phase.order,
         isSenior: phase.isSenior,
         created_at: new Date()
       }));
-      console.log('Loaded phases:', phases.length);
-
+      console.log('Processed phases:', phases);
       setAllPhases(phases);
 
-      // Skip goals entirely for now - use empty array
-      console.log('Skipping goals, using empty array...');
+      // Load real user data from Firestore
+      setLoadingStage('Looking up your goals and reflections...');
+      console.log('Loading real goals and reflections...');
+      console.log('Query parameters:', {
+        collection: COLLECTIONS.DAILY_GOALS,
+        field: 'student_id',
+        value: targetUserId
+      });
+      
+      const userGoals = await FirestoreService.getWhere<DailyGoal>(
+        COLLECTIONS.DAILY_GOALS,
+        'student_id',
+        '==',
+        targetUserId
+      );
+      console.log('Loaded user goals:', userGoals);
 
-      // Process phase progress using local data only
-      console.log('Processing phase progress...');
-      const phaseProgressData: PhaseProgress[] = phases.map((phase) => {
+      // Process phase progress using real data
+      setLoadingStage('Analyzing your learning progress...');
+      console.log('Processing phase progress with real data...');
+      const phaseProgressPromises = phases.map(async (phase) => {
         const phaseTopics = detailedTopics[phase.name] || [];
         const topics: Topic[] = phaseTopics.map((topic, index) => ({
-          id: `local-topic-${phase.id}-${index}`,
+          id: `topic-${phase.name}-${topic.name}`.toLowerCase().replace(/\s+/g, '-'),
           name: topic.name,
           order: topic.order,
           deliverable: topic.deliverable,
@@ -272,17 +336,64 @@ const StudentJourney: React.FC = () => {
           created_at: new Date()
         }));
 
-        // Create topic progress with all incomplete for now
-        const topicProgress: TopicProgress[] = topics.map((topic) => ({
-          topic,
-          completed: false, // All topics marked as incomplete for now
-          completionDate: undefined,
-          phaseName: phase.name
-        }));
+        // Calculate real topic completion based on goals and reflections
+        const topicProgressPromises = topics.map(async (topic) => {
+          // Find goals for this topic
+          const topicGoals = userGoals.filter(goal => goal.topic_id === topic.id);
+          console.log(`Goals for topic ${topic.name}:`, topicGoals);
 
-        const completedTopics = 0; // No completed topics for now
+          let completed = false;
+          let completionDate: Date | undefined;
+
+          // A phase is considered complete when user starts creating goals for the next phase
+          try {
+            // Get all goals for this topic, sorted by date
+            const sortedGoals = topicGoals.sort((a, b) => 
+              new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            );
+
+            if (sortedGoals.length > 0) {
+              const lastGoalDate = new Date(sortedGoals[sortedGoals.length - 1].created_at);
+
+              // Get goals from next phase
+              const nextPhaseGoals = await FirestoreService.getWhere<DailyGoal>(
+                COLLECTIONS.DAILY_GOALS,
+                'student_id',
+                '==',
+                userData?.id
+              );
+
+              // Filter goals from the next phase and check if there's at least one goal
+              const nextPhaseFirstGoal = nextPhaseGoals
+                .filter(g => g.phase_id === phases[phase.order].id) // next phase
+                .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())[0];
+
+              if (nextPhaseFirstGoal) {
+                const nextPhaseStartDate = new Date(nextPhaseFirstGoal.created_at);
+                // If user has started the next phase, mark this topic as completed
+                if (lastGoalDate < nextPhaseStartDate) {
+                  completed = true;
+                  completionDate = lastGoalDate;
+                }
+              }
+            }
+          } catch (error) {
+            console.error('Error checking phase completion:', error);
+          }
+
+          return {
+            topic,
+            completed,
+            completionDate,
+            phaseName: phase.name
+          };
+        });
+
+        const topicProgress = await Promise.all(topicProgressPromises);
+
+        const completedTopics = topicProgress.filter(tp => tp.completed).length;
         const totalTopics = topicProgress.length;
-        const progressPercentage = 0; // 0% progress for now
+        const progressPercentage = totalTopics > 0 ? (completedTopics / totalTopics) * 100 : 0;
 
         return {
           phase,
@@ -293,35 +404,70 @@ const StudentJourney: React.FC = () => {
         };
       });
 
-      console.log('Processed phase progress:', phaseProgressData.length);
+      const phaseProgressData = await Promise.all(phaseProgressPromises);
+
+      console.log('Detailed phase progress:', JSON.stringify(phaseProgressData, null, 2));
+      console.log('Summary phase progress:', phaseProgressData.map(p => ({
+        phase: p.phase.name,
+        completed: p.completedTopics,
+        total: p.totalTopics,
+        percentage: Math.round(p.progressPercentage),
+        topics: p.topics.map(t => ({
+          name: t.topic.name,
+          completed: t.completed,
+          completionDate: t.completionDate
+        }))
+      })));
+
       setPhaseProgress(phaseProgressData);
 
       // Calculate phase duration data for the chart
       const durationData: PhaseDurationData[] = calculatePhaseDurations(phaseProgressData, userData?.campus_joining_date);
 
-      // Set chart data without house averages
-      const combinedData = combineChartData(durationData, []);
+      // Try to load house averages (this was commented out before)
+      let houseData: HouseAverageData[] = [];
+      if (userData?.house) {
+        try {
+          setLoadingStage('Checking how other house members are doing...');
+          console.log('Loading house average data...');
+          houseData = await calculateHouseAverages(userData.house, phases);
+          console.log('Loaded house averages:', houseData);
+        } catch (error) {
+          console.warn('Failed to load house averages:', error);
+        }
+      }
+
+      // Combine student data with house averages
+      const combinedData = combineChartData(durationData, houseData);
       setCombinedChartData(combinedData);
 
-      console.log('Journey data loaded successfully');
+      console.log('Real journey data loaded successfully');
 
     } catch (error) {
-      console.error('Error loading journey data:', error);
+      console.error('Error loading real journey data:', error);
       setError('Failed to load journey data');
     } finally {
       setLoading(false);
     }
-  }, [userData]);
+  }, [userData, selectedUserId]);
 
   useEffect(() => {
     loadJourneyData();
-  }, [loadJourneyData]);
+  }, [loadJourneyData, selectedUserId]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2 text-gray-600">Loading journey data...</span>
+      <div className="flex flex-col items-center justify-center py-12 space-y-4">
+        <div className="relative">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+            <div className="w-8 h-8 bg-white rounded-full"></div>
+          </div>
+        </div>
+        <div className="text-center space-y-2">
+          <p className="text-lg font-medium text-gray-800">{loadingStage || 'Preparing your journey data...'}</p>
+          <p className="text-sm text-gray-500">This might take a moment</p>
+        </div>
       </div>
     );
   }
@@ -344,6 +490,35 @@ const StudentJourney: React.FC = () => {
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Learning Journey</h1>
         <p className="text-gray-600">Track your progress through the curriculum phases and topics</p>
       </div>
+
+      {/* Show filters only for admins */}
+      {userData?.isAdmin && (
+        <div className="bg-white rounded-lg shadow p-4 mb-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Filter Students</h3>
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Campus</label>
+              <CampusFilter
+                selectedCampus={selectedCampus}
+                onCampusSelect={handleCampusSelect}
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Student</label>
+              <UserSelector 
+                onUserSelect={handleUserSelect}
+                currentUserId={selectedUserId || userData?.id}
+                campusFilter={selectedCampus}
+              />
+            </div>
+          </div>
+          {selectedUserData && (
+            <p className="text-sm text-gray-600 mt-4">
+              Viewing journey for: {selectedUserData.display_name || selectedUserData.name || selectedUserData.email}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Main Journey Card */}
       <div className="bg-white rounded-xl shadow-xl p-8 mb-8">

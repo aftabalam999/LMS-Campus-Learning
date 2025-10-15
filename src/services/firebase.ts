@@ -3,8 +3,8 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getFunctions } from 'firebase/functions';
 
-// Firebase configuration
-const firebaseConfig = {
+// Configuration for dharamshalacampus project (for database)
+const dharamshalaConfig = {
   apiKey: "AIzaSyBaLncnVJzGRHxgpAhyl9IeX8dz2e3e-VA",
   authDomain: "dharamshalacampus.firebaseapp.com",
   projectId: "dharamshalacampus",
@@ -14,10 +14,10 @@ const firebaseConfig = {
   measurementId: "G-3E03XTJRT0"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Initialize the main Firebase app (dharamshalacampus)
+const app = initializeApp(dharamshalaConfig);
 
-// Initialize Firebase services
+// Initialize Firebase services from dharamshalacampus
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const functions = getFunctions(app);

@@ -5,10 +5,9 @@ import Toast from '../Common/Toast';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
   PhaseService, 
-  TopicService, 
-  GoalService,
-  ReflectionService
+  TopicService
 } from '../../services/dataServices';
+import { FirestoreService, COLLECTIONS } from '../../services/firestore';
 import { DataSeedingService } from '../../services/dataSeedingService';
 import { Phase, Topic, DailyGoal, DailyReflection, GoalFormData } from '../../types';
 import { getSmartFeedback } from '../../services/geminiClientApi';
@@ -81,12 +80,32 @@ const GoalSetting: React.FC = () => {
     
     setIsLoading(true);
     try {
-      const [phasesData, goalData] = await Promise.all([
-        PhaseService.getAllPhases(),
-        GoalService.getTodaysGoal(userData.id)
+      const [phasesData] = await Promise.all([
+        PhaseService.getAllPhases()
       ]);
 
       setPhases(phasesData);
+      
+      // Get today's goal - look for goals created today
+      const today = new Date();
+      const startOfDay = new Date(today);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(today);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      const todaysGoals = await FirestoreService.getWhere<DailyGoal>(
+        COLLECTIONS.DAILY_GOALS,
+        'student_id',
+        '==',
+        userData.id
+      );
+      
+      // Filter for today's goals (client-side date filtering)
+      const goalData = todaysGoals.find(goal => {
+        const goalDate = goal.created_at instanceof Date ? goal.created_at : new Date(goal.created_at);
+        return goalDate >= startOfDay && goalDate <= endOfDay;
+      }) || null;
+      
       setTodaysGoal(goalData);
       
       // Load existing feedback if goal exists
@@ -115,7 +134,13 @@ const GoalSetting: React.FC = () => {
       });
 
       if (goalData) {
-        const reflectionData = await ReflectionService.getReflectionByGoal(goalData.id);
+        const reflections = await FirestoreService.getWhere<DailyReflection>(
+          COLLECTIONS.DAILY_REFLECTIONS,
+          'goal_id',
+          '==',
+          goalData.id
+        );
+        const reflectionData = reflections[0] || null;
         setTodaysReflection(reflectionData);
       }
     } catch (error) {
@@ -185,23 +210,43 @@ const GoalSetting: React.FC = () => {
       let result = true;
       
       if (goalId) {
-        // Update existing goal
-        await GoalService.updateGoal(goalId, {
+        // Update existing goal - only include fields that are defined
+        const updateData: Partial<DailyGoal> = {
           ...formData,
-          status: 'pending',
-          goal_rating: goalRating || undefined,
-          goal_feedback: feedback || undefined
-        });
+          status: 'pending'
+        };
+        
+        // Only include goal_rating if it's not null/undefined
+        if (goalRating !== null && goalRating !== undefined) {
+          updateData.goal_rating = goalRating;
+        }
+        
+        // Only include goal_feedback if it's not null/undefined
+        if (feedback !== null && feedback !== undefined && feedback.trim() !== '') {
+          updateData.goal_feedback = feedback;
+        }
+        
+        await FirestoreService.update<DailyGoal>(COLLECTIONS.DAILY_GOALS, goalId, updateData);
       } else {
-        // Create new goal
-        await GoalService.createGoal({
+        // Create new goal - only include fields that are defined
+        const createData: Omit<DailyGoal, 'id'> = {
           ...formData,
           student_id: userData?.id || '',
           status: 'pending',
-          goal_rating: goalRating || undefined,
-          goal_feedback: feedback || undefined,
           created_at: formData.goal_date || new Date()
-        });
+        };
+        
+        // Only include goal_rating if it's not null/undefined
+        if (goalRating !== null && goalRating !== undefined) {
+          createData.goal_rating = goalRating;
+        }
+        
+        // Only include goal_feedback if it's not null/undefined
+        if (feedback !== null && feedback !== undefined && feedback.trim() !== '') {
+          createData.goal_feedback = feedback;
+        }
+        
+        await FirestoreService.create<DailyGoal>(COLLECTIONS.DAILY_GOALS, createData);
       }
       
       if (result) {
@@ -223,7 +268,13 @@ const GoalSetting: React.FC = () => {
   // Handle reflection submission
   const handleReflectionSubmit = async () => {
     if (todaysGoal) {
-      const reflectionData = await ReflectionService.getReflectionByGoal(todaysGoal.id);
+      const reflections = await FirestoreService.getWhere<DailyReflection>(
+        COLLECTIONS.DAILY_REFLECTIONS,
+        'goal_id',
+        '==',
+        todaysGoal.id
+      );
+      const reflectionData = reflections[0] || null;
       setTodaysReflection(reflectionData);
     }
   };

@@ -28,8 +28,10 @@ const MentorRequestApproval: React.FC = () => {
 
   const loadPendingRequests = async () => {
     try {
+      console.log('Loading pending mentor requests...');
       setLoading(true);
       const pendingRequests = await MentorshipService.getPendingMentorRequests();
+      console.log('Loaded pending requests:', pendingRequests);
       // Sort by created_at (newest first)
       const sorted = pendingRequests.sort((a, b) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -47,9 +49,17 @@ const MentorRequestApproval: React.FC = () => {
     if (!userData?.id) return;
 
     try {
+      console.log('Starting approval process for request:', requestId);
       setProcessing(requestId);
       setError('');
       setSuccess('');
+
+      console.log('Approving request with data:', {
+        requestId,
+        adminId: userData.id,
+        role: (userData.role === 'admin' || userData.role === 'super_mentor') ? userData.role : 'admin',
+        hasNotes: !!adminNotes[requestId]
+      });
 
       await MentorshipService.approveMentorRequest(
         requestId,
@@ -58,6 +68,7 @@ const MentorRequestApproval: React.FC = () => {
         adminNotes[requestId]
       );
 
+      console.log('Request approved successfully');
       setSuccess('Mentor change request approved successfully');
       await loadPendingRequests();
       

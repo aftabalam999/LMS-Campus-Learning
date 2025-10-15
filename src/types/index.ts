@@ -3,6 +3,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  display_name?: string;
   isAdmin?: boolean;    // Only used for admin-specific features
   isMentor?: boolean;   // Whether the user is a mentor
   isSuperMentor?: boolean;  // Can have unlimited mentees (no 2-mentee limit)

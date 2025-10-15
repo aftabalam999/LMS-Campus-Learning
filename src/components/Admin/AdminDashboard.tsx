@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PhaseTimelineAdminPanel from './PhaseTimelineAdminPanel';
 // import removed: useNavigate
 import { DataSeedingService } from '../../services/dataSeedingService';
@@ -14,6 +15,7 @@ import AttendanceDashboard from './AttendanceDashboard';
 
 
 const AdminDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [loading] = useState(false); // Fixed: was stuck on true
   const [seeding, setSeeding] = useState(false);
 
@@ -84,6 +86,21 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
+      {/* Header with Learners Dashboard Button */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+        <button
+          onClick={() => navigate('/student/dashboard')}
+          className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
+        >
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z" />
+          </svg>
+          <span>Learners Dashboard</span>
+        </button>
+      </div>
+
       {/* Main Tabs */}
       <nav className="flex space-x-4 mb-4">
         {mainTabs.map((tab: { id: string; label: string }) => (

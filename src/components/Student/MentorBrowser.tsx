@@ -35,7 +35,23 @@ const MentorBrowser: React.FC<MentorBrowserProps> = ({
   const listRef = useRef<HTMLDivElement>(null);
   const [campusFilter, setCampusFilter] = useState<string>(userData?.campus || 'all');
   const [houseFilter, setHouseFilter] = useState<string>(userData?.house || 'all');
+  const [hasPendingRequest, setHasPendingRequest] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+
+  // Check for pending mentor requests
+  useEffect(() => {
+    const checkPendingRequest = async () => {
+      try {
+        const requests = await MentorshipService.getStudentMentorRequests(currentStudentId);
+        const pending = requests.some(r => r.status === 'pending');
+        setHasPendingRequest(pending);
+      } catch (error) {
+        console.error('Error checking pending requests:', error);
+      }
+    };
+
+    checkPendingRequest();
+  }, [currentStudentId]);
 
   // Load mentors when component mounts - this ensures fresh data every time the modal opens
   useEffect(() => {
@@ -155,7 +171,14 @@ const MentorBrowser: React.FC<MentorBrowserProps> = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between px-6 py-4 border-b">
-          <h2 className="text-xl font-bold text-gray-900">Browse Mentors</h2>
+          <div className="flex items-center gap-4">
+            <h2 className="text-xl font-bold text-gray-900">Browse Mentors</h2>
+            {hasPendingRequest && (
+              <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
+                Change request pending
+              </span>
+            )}
+          </div>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
