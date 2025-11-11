@@ -3,6 +3,7 @@ import { AdminService, GoalService, ReflectionService } from '../../services/dat
 import { User, DailyGoal, DailyReflection } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { Search, Users, Target, MessageSquare, RefreshCw, ChevronDown, CheckCircle, Eye, ArrowLeft, AlertCircle } from 'lucide-react';
+import { queryCache } from '../../utils/cache';
 
 interface CampusData {
   students: User[];
@@ -149,7 +150,18 @@ const handleGoalApproval = async (goalId: string, status: 'approved' | 'reviewed
       setSuccessMessage('');
       
       console.log('🎯 Approving goal:', goalId, 'with status:', status, 'by user:', userData?.id);
+      
+      // Get the goal to find student ID
+      const goal = userGoals.find(g => g.id === goalId);
+      const studentId = goal?.student_id || selectedUser?.id;
+      
       await GoalService.reviewGoal(goalId, userData?.id || 'admin', status);
+      
+      // Invalidate cache to force fresh data on next fetch
+      if (studentId) {
+        queryCache.invalidate(`goals:student:${studentId}`);
+      }
+      queryCache.invalidate('all-users');
       
       // Optimistically update the UI immediately
       setUserGoals(prev => prev.map(goal => 
@@ -173,7 +185,7 @@ const handleGoalApproval = async (goalId: string, status: 'approved' | 'reviewed
       
       setSuccessMessage(`Goal ${status === 'approved' ? 'approved' : 'reviewed'} successfully! ✅`);
       
-      // Refresh in background to ensure sync
+      // Refresh in background to ensure sync (now will fetch fresh data)
       setTimeout(() => {
         if (selectedUser) {
           selectUser(selectedUser);
@@ -200,7 +212,18 @@ const handleGoalApproval = async (goalId: string, status: 'approved' | 'reviewed
       setSuccessMessage('');
       
       console.log('💭 Approving reflection:', reflectionId, 'with status:', status, 'by user:', userData?.id);
+      
+      // Get the reflection to find student ID
+      const reflection = userReflections.find(r => r.id === reflectionId);
+      const studentId = reflection?.student_id || selectedUser?.id;
+      
       await ReflectionService.reviewReflection(reflectionId, userData?.id || 'admin', status);
+      
+      // Invalidate cache to force fresh data on next fetch
+      if (studentId) {
+        queryCache.invalidate(`reflections:student:${studentId}`);
+      }
+      queryCache.invalidate('all-users');
       
       // Optimistically update the UI immediately
       setUserReflections(prev => prev.map(reflection => 
@@ -224,7 +247,7 @@ const handleGoalApproval = async (goalId: string, status: 'approved' | 'reviewed
       
       setSuccessMessage(`Reflection ${status === 'approved' ? 'approved' : 'reviewed'} successfully! ✅`);
       
-      // Refresh in background to ensure sync
+      // Refresh in background to ensure sync (now will fetch fresh data)
       setTimeout(() => {
         if (selectedUser) {
           selectUser(selectedUser);
