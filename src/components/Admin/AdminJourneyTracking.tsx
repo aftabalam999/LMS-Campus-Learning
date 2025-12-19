@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Clock, Users, Target, BookOpen, X } from 'lucide-react';
+import { Clock, Users, Target, BookOpen, X, RefreshCw } from 'lucide-react';
 import { GoalService } from '../../services/dataServices';
 import { PhaseService } from '../../services/dataServices';
 import { TopicService } from '../../services/dataServices';
 import { UserService, COLLECTIONS } from '../../services/firestore';
+import { PhaseApprovalService } from '../../services/phaseApprovalService';
 
 interface StudentStats {
   studentId: string;
@@ -21,6 +22,8 @@ interface PhaseData {
   averageDaysSpent: number;
   topics: TopicData[];
   order: number;
+  activeStudentsCount?: number;
+  completedStudentsCount?: number;
 }
 
 interface TopicData {
@@ -35,6 +38,7 @@ const AdminJourneyTracking: React.FC = () => {
   const [standalonePhases, setStandalonePhases] = useState<PhaseData[]>([]);
   const [totalStudents, setTotalStudents] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [recalculating, setRecalculating] = useState(false);
   const [studentStats, setStudentStats] = useState<StudentStats[]>([]);
   const [selectedTopic, setSelectedTopic] = useState<{
     topicId: string;
@@ -52,6 +56,20 @@ const AdminJourneyTracking: React.FC = () => {
     studentName: string;
     phases: Array<{ phaseId: string; phaseName: string; daysSpent: number; topicCount: number; order: number }>;
   } | null>(null);
+
+  const handleRecalculateCounts = useCallback(async () => {
+    try {
+      setRecalculating(true);
+      await PhaseApprovalService.recalculatePhaseCounts();
+      // Reload data after recalculation
+      window.location.reload();
+    } catch (error) {
+      console.error('Error recalculating counts:', error);
+      alert('Failed to recalculate counts. Check console for details.');
+    } finally {
+      setRecalculating(false);
+    }
+  }, []);
 
   const calculateStudentStats = useCallback(async (): Promise<StudentStats[]> => {
     try {
@@ -185,9 +203,9 @@ const AdminJourneyTracking: React.FC = () => {
       // Sort phases by order to handle parallel phases correctly
       const sortedPhases = phases.sort((a: any, b: any) => a.order - b.order);
 
-      // Separate standalone phases (order -1) from ordered phases
-      const orderedPhases = sortedPhases.filter((phase: any) => phase.order >= 0);
-      const standalonePhases = sortedPhases.filter((phase: any) => phase.order < 0);
+      // Separate standalone phases (order >= 9) from ordered phases
+      const orderedPhases = sortedPhases.filter((phase: any) => phase.order < 9);
+      const standalonePhases = sortedPhases.filter((phase: any) => phase.order >= 9);
 
       // Calculate phase data for ordered phases
       const orderedPhaseDataArray: PhaseData[] = [];
@@ -224,7 +242,9 @@ const AdminJourneyTracking: React.FC = () => {
           totalStudents: uniquePhaseStudents.size, // Count unique students, not total goals
           averageDaysSpent,
           topics: topicData,
-          order: phase.order
+          order: phase.order,
+          activeStudentsCount: phase.active_students_count || 0,
+          completedStudentsCount: phase.completed_students_count || 0
         });
       });
 
@@ -263,7 +283,9 @@ const AdminJourneyTracking: React.FC = () => {
           totalStudents: uniquePhaseStudents.size, // Count unique students, not total goals
           averageDaysSpent,
           topics: topicData,
-          order: phase.order
+          order: phase.order,
+          activeStudentsCount: phase.active_students_count || 0,
+          completedStudentsCount: phase.completed_students_count || 0
         });
       });
 
@@ -397,9 +419,9 @@ const AdminJourneyTracking: React.FC = () => {
           order: data.order
         }))
         .sort((a, b) => {
-          // Sort standalone phases (order < 0) to the end
-          if (a.order < 0 && b.order >= 0) return 1;
-          if (b.order < 0 && a.order >= 0) return -1;
+          // Sort standalone phases (order >= 9) to the end
+          if (a.order >= 9 && b.order < 9) return 1;
+          if (b.order >= 9 && a.order < 9) return -1;
           return a.order - b.order;
         });
 
@@ -436,6 +458,14 @@ const AdminJourneyTracking: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-4">
+          <button
+            onClick={handleRecalculateCounts}
+            disabled={recalculating}
+            className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${recalculating ? 'animate-spin' : ''}`} />
+            {recalculating ? 'Recalculating...' : 'Recalculate Counts'}
+          </button>
           <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
             <Users className="h-4 w-4 mr-2" />
             {totalStudents} Active Students
@@ -450,14 +480,9 @@ const AdminJourneyTracking: React.FC = () => {
           return (
             <div key={phase.phaseId} className="bg-white rounded-lg shadow-md border border-gray-200 flex flex-col">
               <div className="p-6 pb-3">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <Target className="h-5 w-5 text-blue-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">{phase.phaseName}</h3>
-                  </div>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    {phase.totalStudents} students
-                  </span>
+                <div className="flex items-center gap-2 mb-4">
+                  <Target className="h-5 w-5 text-blue-600" />
+                  <h3 className="text-lg font-semibold text-gray-900">{phase.phaseName}</h3>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
@@ -474,6 +499,19 @@ const AdminJourneyTracking: React.FC = () => {
               </div>
 
               <div className="flex-1 p-6 pt-0 space-y-4">
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <div className="text-xs text-green-600 font-medium mb-1">Active</div>
+                    <div className="text-2xl font-bold text-green-700">{phase.activeStudentsCount || 0}</div>
+                    <div className="text-xs text-green-600">Currently working</div>
+                  </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <div className="text-xs text-blue-600 font-medium mb-1">Completed</div>
+                    <div className="text-2xl font-bold text-blue-700">{phase.completedStudentsCount || 0}</div>
+                    <div className="text-xs text-blue-600">Moved to next phase</div>
+                  </div>
+                </div>
+
                 <div className="flex items-center gap-2 text-sm">
                   <Clock className="h-4 w-4 text-gray-500" />
                   <span className="text-gray-600">Average days spent:</span>
@@ -527,16 +565,11 @@ const AdminJourneyTracking: React.FC = () => {
               return (
                 <div key={phase.phaseId} className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg shadow-md border border-purple-200 flex flex-col">
                   <div className="p-6 pb-3">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        <div className="h-5 w-5 rounded-full bg-purple-600 flex items-center justify-center">
-                          <span className="text-white text-xs font-bold">S</span>
-                        </div>
-                        <h3 className="text-lg font-semibold text-gray-900">{phase.phaseName}</h3>
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="h-5 w-5 rounded-full bg-purple-600 flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">S</span>
                       </div>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                        {phase.totalStudents} students
-                      </span>
+                      <h3 className="text-lg font-semibold text-gray-900">{phase.phaseName}</h3>
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
@@ -553,6 +586,19 @@ const AdminJourneyTracking: React.FC = () => {
                   </div>
 
                   <div className="flex-1 p-6 pt-0 space-y-4">
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                        <div className="text-xs text-green-600 font-medium mb-1">Active</div>
+                        <div className="text-2xl font-bold text-green-700">{phase.activeStudentsCount || 0}</div>
+                        <div className="text-xs text-green-600">Currently working</div>
+                      </div>
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <div className="text-xs text-blue-600 font-medium mb-1">Completed</div>
+                        <div className="text-2xl font-bold text-blue-700">{phase.completedStudentsCount || 0}</div>
+                        <div className="text-xs text-blue-600">Moved to next phase</div>
+                      </div>
+                    </div>
+
                     <div className="flex items-center gap-2 text-sm">
                       <Clock className="h-4 w-4 text-gray-500" />
                       <span className="text-gray-600">Average days spent:</span>
@@ -729,14 +775,14 @@ const AdminJourneyTracking: React.FC = () => {
                 <div
                   key={phase.phaseId}
                   className={`p-4 rounded-lg border ${
-                    phase.order < 0 
+                    phase.order >= 9 
                       ? 'bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200'
                       : 'bg-gray-50 border-gray-200'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
-                      {phase.order < 0 ? (
+                      {phase.order >= 9 ? (
                         <div className="h-8 w-8 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
                           <span className="text-white text-sm font-bold">S</span>
                         </div>
@@ -749,7 +795,7 @@ const AdminJourneyTracking: React.FC = () => {
                         <h3 className="text-base font-semibold text-gray-900">{phase.phaseName}</h3>
                         <p className="text-xs text-gray-500">
                           {phase.topicCount} topic{phase.topicCount !== 1 ? 's' : ''}
-                          {phase.order < 0 && ' • Self Learning'}
+                          {phase.order >= 9 && ' • Self Learning'}
                         </p>
                       </div>
                     </div>
@@ -763,7 +809,7 @@ const AdminJourneyTracking: React.FC = () => {
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
                         className={`h-2 rounded-full transition-all duration-300 ${
-                          phase.order < 0 ? 'bg-purple-600' : 'bg-blue-600'
+                          phase.order >= 9 ? 'bg-purple-600' : 'bg-blue-600'
                         }`}
                         style={{ 
                           width: `${Math.min(100, (phase.daysSpent / Math.max(...selectedStudentPhases.phases.map(p => p.daysSpent))) * 100)}%` 
