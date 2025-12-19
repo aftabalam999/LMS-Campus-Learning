@@ -9,10 +9,11 @@ import {
 } from '../../services/dataServices';
 import { FirestoreService, COLLECTIONS } from '../../services/firestore';
 import { DataSeedingService } from '../../services/dataSeedingService';
-import { Phase, Topic, DailyGoal, DailyReflection, GoalFormData } from '../../types';
+import { Phase, Topic, DailyGoal, DailyReflection, GoalFormData, PhaseApproval } from '../../types';
 import { getSmartFeedback } from '../../services/geminiClientApi';
 import DailyReflectionForm from './DailyReflectionForm';
 import { detailedTopics } from '../../data/initialData';
+import { PhaseApprovalService } from '../../services/phaseApprovalService';
 import {
   Target,
   TrendingUp,
@@ -22,7 +23,8 @@ import {
   RefreshCw,
   Edit,
   MessageSquare,
-  Lightbulb
+  Lightbulb,
+  Lock
 } from 'lucide-react';
 
 const GoalSetting: React.FC = () => {
@@ -64,6 +66,13 @@ const GoalSetting: React.FC = () => {
   // Toast state
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  
+  // Phase approval state
+  const [approvedPhases, setApprovedPhases] = useState<Set<string>>(new Set());
+  const [pendingApprovals, setPendingApprovals] = useState<PhaseApproval[]>([]);
+  const [currentUserPhase, setCurrentUserPhase] = useState<Phase | null>(null);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [requestingPhase, setRequestingPhase] = useState<Phase | null>(null);
 
   // Convert markdown to sanitized HTML using marked + DOMPurify
   const markdownToHtml = (md: string) => {
@@ -80,9 +89,20 @@ const GoalSetting: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const [phasesData] = await Promise.all([
-        PhaseService.getAllPhases()
-      ]);
+      // Load phases first (critical)
+      const phasesData = await PhaseService.getAllPhases();
+      
+      // Try to load approval data, but don't fail if it errors
+      let approvalHistory: any[] = [];
+      let pendingApprovalsData: any[] = [];
+      
+      try {
+        approvalHistory = await PhaseApprovalService.getApprovalHistory(userData.id);
+        pendingApprovalsData = await PhaseApprovalService.getPendingApprovals(userData.id);
+      } catch (approvalError) {
+        console.warn('Could not load approval data (index may need to be created):', approvalError);
+        // Continue without approval data - all phases will be accessible
+      }
 
       // Deduplicate phases by name
       const uniquePhases = phasesData.filter((phase, index, self) =>
@@ -91,23 +111,67 @@ const GoalSetting: React.FC = () => {
 
       // Custom Sort Order
       uniquePhases.sort((a, b) => {
-        // 1. Self Learning Space
-        if (a.name === 'Self Learning Space') return -1;
-        if (b.name === 'Self Learning Space') return 1;
-
-        // 2. Super mentor Phase
-        if (a.name === 'Super mentor Phase') return -1;
-        if (b.name === 'Super mentor Phase') return 1;
-
-        // 3. Induction
+        // 1. Induction first
         if (a.name === 'Induction: Life Skills & Learning') return -1;
         if (b.name === 'Induction: Life Skills & Learning') return 1;
 
-        // 4. By Order
-        return a.order - b.order;
+        // 2. Regular phases by order
+        const aIsSpecial = a.name === 'Self Learning Space' || a.name === 'Super mentor Phase';
+        const bIsSpecial = b.name === 'Self Learning Space' || b.name === 'Super mentor Phase';
+        
+        if (!aIsSpecial && !bIsSpecial) {
+          // Both are regular phases, sort by order
+          return a.order - b.order;
+        }
+        
+        if (aIsSpecial && !bIsSpecial) {
+          // a is special, b is regular - put a at the end
+          return 1;
+        }
+        
+        if (!aIsSpecial && bIsSpecial) {
+          // a is regular, b is special - put b at the end
+          return -1;
+        }
+        
+        // 3. Both are special phases - Self Learning Space before Super mentor Phase
+        if (a.name === 'Self Learning Space') return -1;
+        if (b.name === 'Self Learning Space') return 1;
+        return 0;
       });
 
       setPhases(uniquePhases);
+      setPendingApprovals(pendingApprovalsData);
+      
+      // Find current user phase - default to Induction phase if not set
+      const inductionPhase = uniquePhases.find(p => p.name === 'Induction: Life Skills & Learning');
+      const userPhase = uniquePhases.find(p => p.id === userData.current_phase_id) || inductionPhase || uniquePhases[0];
+      setCurrentUserPhase(userPhase);
+
+      // Get approved phases - include current phase and all approved phases
+      const approvedPhaseIds = new Set<string>();
+      
+      // Always approve Induction phase as the starting phase
+      if (inductionPhase) {
+        approvedPhaseIds.add(inductionPhase.id);
+      }
+      
+      // Always approve current phase and all phases before it (excluding special phases)
+      uniquePhases.forEach(phase => {
+        // Don't auto-approve Self Learning Space or Super mentor Phase
+        const isSpecialPhase = phase.name === 'Self Learning Space' || phase.name === 'Super mentor Phase';
+        
+        if (!isSpecialPhase && phase.order >= 0 && phase.order <= (userPhase?.order || 0)) {
+          approvedPhaseIds.add(phase.id);
+        }
+      });
+      
+      // Add explicitly approved phases (including special phases if approved)
+      approvalHistory
+        .filter(approval => approval.status === 'approved')
+        .forEach(approval => approvedPhaseIds.add(approval.next_phase_id));
+      
+      setApprovedPhases(approvedPhaseIds);
 
       // Get today's goal - look for goals created today
       const today = new Date();
@@ -170,7 +234,7 @@ const GoalSetting: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [userData?.id]);
+  }, [userData?.id, userData?.current_phase_id]);
 
   useEffect(() => {
     loadInitialData();
@@ -213,6 +277,62 @@ const GoalSetting: React.FC = () => {
     } catch (error) {
       console.error('Error loading topics:', error);
       setError('Failed to load topics');
+    }
+  };
+
+  // Check if a phase is accessible
+  const isPhaseAccessible = (phase: Phase): boolean => {
+    // Always allow access to approved phases
+    if (approvedPhases.has(phase.id)) {
+      return true;
+    }
+    
+    // Block access to future phases that aren't approved
+    return false;
+  };
+
+  // Handle phase selection with approval check
+  const handlePhaseSelection = (phaseId: string) => {
+    const selectedPhase = phases.find(p => p.id === phaseId);
+    
+    if (!selectedPhase || !phaseId) return;
+
+    // Check if phase is accessible
+    if (isPhaseAccessible(selectedPhase)) {
+      setFormData(prev => ({ ...prev, phase_id: phaseId, topic_id: '' }));
+    } else {
+      // Reset the selection back to empty or current phase
+      setFormData(prev => ({ ...prev, phase_id: '', topic_id: '' }));
+      
+      // Show approval request modal
+      setRequestingPhase(selectedPhase);
+      setShowApprovalModal(true);
+    }
+  };
+
+  // Request approval for next phase
+  const handleRequestApproval = async () => {
+    if (!requestingPhase || !currentUserPhase || !userData?.id) return;
+
+    try {
+      setLoading(true);
+      await PhaseApprovalService.requestPhaseApproval(
+        userData.id,
+        currentUserPhase.id,
+        requestingPhase.id
+      );
+      
+      setShowApprovalModal(false);
+      setToastMessage('Approval request sent to admin/academic associate');
+      setShowToast(true);
+      
+      // Reload approval data
+      await loadInitialData();
+    } catch (error) {
+      console.error('Error requesting approval:', error);
+      setError('Failed to request approval');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -339,17 +459,33 @@ const GoalSetting: React.FC = () => {
             id="phase_id"
             name="phase_id"
             value={formData.phase_id}
-            onChange={handleInputChange}
+            onChange={(e) => handlePhaseSelection(e.target.value)}
             className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             required
           >
             <option value="">Select a phase</option>
-            {phases.map((phase) => (
-              <option key={phase.id} value={phase.id}>
-                {phase.name}
-              </option>
-            ))}
+            {phases.map((phase) => {
+              const isAccessible = isPhaseAccessible(phase);
+              const hasPendingRequest = pendingApprovals.some(a => a.next_phase_id === phase.id);
+              
+              return (
+                <option 
+                  key={phase.id} 
+                  value={phase.id}
+                >
+                  {phase.name}
+                  {!isAccessible && !hasPendingRequest ? ' 🔒 (Request Approval)' : ''}
+                  {hasPendingRequest ? ' ⏳ (Pending Approval)' : ''}
+                  {isAccessible && phase.id !== currentUserPhase?.id ? ' ✓ (Approved)' : ''}
+                </option>
+              );
+            })}
           </select>
+          {pendingApprovals.length > 0 && (
+            <p className="mt-2 text-sm text-blue-600">
+              You have {pendingApprovals.length} pending approval request(s)
+            </p>
+          )}
         </div>
 
         <div>
@@ -802,6 +938,47 @@ const GoalSetting: React.FC = () => {
             </div>
             <div className="w-2 h-2 bg-white rounded-full opacity-70 group-hover:opacity-100 transition-opacity"></div>
           </button>
+        </div>
+      )}
+
+      {/* Phase Approval Request Modal */}
+      {showApprovalModal && requestingPhase && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Lock className="h-8 w-8 text-yellow-500" />
+              <h3 className="text-xl font-semibold text-gray-900">
+                Phase Locked
+              </h3>
+            </div>
+            
+            <p className="text-gray-600 mb-4">
+              <strong>{requestingPhase.name}</strong> is currently locked. You need approval from an admin or academic associate to access this phase.
+            </p>
+            
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <p className="text-sm text-blue-800">
+                This prevents accidentally filling goals for future phases before you're ready.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowApprovalModal(false)}
+                className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRequestApproval}
+                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-gray-400"
+                disabled={loading}
+              >
+                {loading ? 'Requesting...' : 'Request Approval'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

@@ -72,10 +72,14 @@ export class LoginTrackingService {
       campus: user.campus,
       house: user.house,
       role: user.role || (user.isAdmin ? 'admin' : user.isMentor ? 'mentor' : 'student'),
-      discord_user_id: user.discord_user_id,
       login_time: loginTime,
       date: today,
     };
+
+    // Only include discord_user_id if it's defined
+    if (user.discord_user_id) {
+      loginRecord.discord_user_id = user.discord_user_id;
+    }
 
     try {
       // Store in daily_logins/{date}/logins/{user_id}

@@ -17,6 +17,7 @@ import MenteeReviewCategoriesAdmin from './MenteeReviewCategoriesAdmin';
 import CampusScheduleAdmin from './CampusScheduleAdmin';
 import HouseStatsAdmin from './HouseStatsAdmin';
 import AdminReviewCompliance from './AdminReviewCompliance';
+import PhaseApprovalManagement from './PhaseApprovalManagement';
 
 
 const AdminDashboard: React.FC = () => {
@@ -50,6 +51,7 @@ const AdminDashboard: React.FC = () => {
       { id: 'users', label: 'User Management' },
       { id: 'mentors', label: 'Mentor Management' },
       { id: 'super-mentors', label: 'Super Mentors' },
+      { id: 'phase-approvals', label: 'Phase Approvals' },
     ],
     reports: [
       { id: 'reports', label: 'Overview' },
@@ -177,6 +179,11 @@ const AdminDashboard: React.FC = () => {
         {mainTab === 'user-management' && subTab === 'super-mentors' && (
           <div className="p-6">
             <SuperMentorManagement />
+          </div>
+        )}
+        {mainTab === 'user-management' && subTab === 'phase-approvals' && (
+          <div className="p-6">
+            <PhaseApprovalManagement />
           </div>
         )}
         {mainTab === 'reports' && subTab === 'reports' && (

@@ -88,7 +88,8 @@ export const COLLECTIONS = {
   MENTEE_REVIEW_CATEGORIES: 'mentee_review_categories',
   MENTOR_AVAILABILITY: 'mentor_availability',
   CAMPUS_SCHEDULES: 'campus_schedules',
-  HOUSE_STATS: 'house_stats'
+  HOUSE_STATS: 'house_stats',
+  PHASE_APPROVALS: 'phase_approvals'
 };
 
 // Generic CRUD operations

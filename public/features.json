@@ -1,371 +1,391 @@
 {
-  "generatedAt": "2025-11-24T10:08:35.890Z",
+  "generatedAt": "2025-12-19T10:56:19.390Z",
   "version": "0.1.0",
   "features": {
     "all": [
       {
-        "id": "feature-055de468",
+        "id": "feature-c1107517",
+        "title": "Chore: Add safe .env.example with placeholders only",
+        "description": "Chore: Add safe .env.example with placeholders only",
+        "status": "coming-soon",
+        "dateAdded": "2025-12-19",
+        "commitHash": "c1107517ad2e2a4d5ae73f0c12b6daa1ee353cd4",
+        "author": "Code-BySachin",
+        "estimatedRelease": "2026-01-02"
+      },
+      {
+        "id": "feature-b7536d36",
+        "title": "Add student phase breakdown and improve days calculation in journey tracker",
+        "description": "Add student phase breakdown and improve days calculation in journey tracker",
+        "status": "released",
+        "dateAdded": "2025-12-19",
+        "commitHash": "b7536d3615a983e6bf3ce8a32664f025ed11215c",
+        "author": "Code-BySachin"
+      },
+      {
+        "id": "feature-b570fd96",
         "title": "Add dedicated Reviews page with UI improvements and fix permission issues",
         "description": "Add dedicated Reviews page with UI improvements and fix permission issues",
         "status": "released",
         "dateAdded": "2025-11-11",
-        "commitHash": "055de4683514c4983380206d1a2d16a1093e4f9d",
+        "commitHash": "b570fd960b86872350f4bc560cc95d68c51b5d88",
         "author": "Mubin"
       },
       {
-        "id": "feature-81cb6c5e",
+        "id": "feature-197b2290",
         "title": "Simplify review flow - unified path from home dashboard",
         "description": "Simplify review flow - unified path from home dashboard",
         "status": "released",
         "dateAdded": "2025-11-10",
-        "commitHash": "81cb6c5e56a8cc2216887bb270d0e250212d035e",
+        "commitHash": "197b2290e70e8b5bbbde13dbd535579e9484261b",
         "author": "Mubin"
       },
       {
-        "id": "feature-f143525b",
+        "id": "feature-ed03bcc8",
         "title": "Add context-aware review system - mentor vs mentee detection",
         "description": "Add context-aware review system - mentor vs mentee detection",
         "status": "released",
         "dateAdded": "2025-11-10",
-        "commitHash": "f143525b09d51ed3306931b009ebef19034891ab",
+        "commitHash": "ed03bcc81bfd1fa55ee9c7593c669c0b9f918c50",
         "author": "Mubin"
       },
       {
-        "id": "feature-89aecefb",
+        "id": "feature-561a991e",
         "title": "Optimize dashboard and improve UX",
         "description": "Optimize dashboard and improve UX",
         "status": "released",
         "dateAdded": "2025-10-22",
-        "commitHash": "89aecefb2ad14f49d6afbd81ffe769d48931d634",
+        "commitHash": "561a991e3fb312fe78ef800f55f51c7da52c2d93",
         "author": "Mubin"
       },
       {
-        "id": "feature-e7c1989a",
+        "id": "feature-3b177f4e",
         "title": "Add Past and Upcoming Sessions to My Sessions tab",
         "description": "Add Past and Upcoming Sessions to My Sessions tab",
         "status": "released",
         "dateAdded": "2025-10-21",
-        "commitHash": "e7c1989aa0585135b7437adf7b14236f4b7d27e8",
+        "commitHash": "3b177f4ec97ed770da7080ef61a1c676bfbd6f6f",
         "author": "Mubin"
       },
       {
-        "id": "feature-aa453858",
+        "id": "feature-90e227c3",
         "title": "Phase 5 - Auto-requeue cancelled sessions",
         "description": "Phase 5 - Auto-requeue cancelled sessions",
         "status": "released",
         "dateAdded": "2025-10-21",
-        "commitHash": "aa453858dea79a5fb90e652a08f5b36879f621c2",
+        "commitHash": "90e227c36df56e405882da75f23d150ec9f19f3e",
         "author": "Mubin"
       },
       {
-        "id": "feature-82d9708a",
+        "id": "feature-77059d0a",
         "title": "Phase 4 Complete - Rolling Queue System Fully Implemented",
         "description": "Phase 4 Complete - Rolling Queue System Fully Implemented",
         "status": "released",
         "dateAdded": "2025-10-21",
-        "commitHash": "82d9708a790b24a5a64454a551258136f6954da3",
+        "commitHash": "77059d0ac18b7ea4b5ae1e1f61ee89b1bc7b7c91",
         "author": "Mubin"
       },
       {
-        "id": "feature-8c408c51",
+        "id": "feature-f4a962cb",
         "title": "Implement Phase 4, Step 4 - Queue UI Components",
         "description": "Implement Phase 4, Step 4 - Queue UI Components",
         "status": "released",
         "dateAdded": "2025-10-21",
-        "commitHash": "8c408c518971158f92cba81af9ffdf34c5ec6714",
+        "commitHash": "f4a962cb654aba1a89dd09b3756310619a6bdf0f",
         "author": "Mubin"
       },
       {
-        "id": "feature-c5a79394",
+        "id": "feature-09ed6345",
         "title": "Implement Phase 4, Step 3 - Queue Integration",
         "description": "Implement Phase 4, Step 3 - Queue Integration",
         "status": "released",
         "dateAdded": "2025-10-21",
-        "commitHash": "c5a7939410690786333a7a0958175ec9e1403458",
+        "commitHash": "09ed634561f939e919eb3b46a79dfcf4a2bd341f",
         "author": "Mubin"
       },
       {
-        "id": "feature-1d965510",
+        "id": "feature-75290b8a",
         "title": "Implement Phase 4, Step 2 - Rolling Queue Service",
         "description": "Implement Phase 4, Step 2 - Rolling Queue Service",
         "status": "released",
         "dateAdded": "2025-10-21",
-        "commitHash": "1d9655106fd06bbc2181592729c2dc9815631824",
+        "commitHash": "75290b8aa7598a0508d70cbe4c1e5629cc93741f",
         "author": "Mubin"
       },
       {
-        "id": "feature-3082fdf2",
+        "id": "feature-32e76fa0",
         "title": "Implement Phase 3 - Academic Associate Admin UI",
         "description": "Implement Phase 3 - Academic Associate Admin UI",
         "status": "released",
         "dateAdded": "2025-10-21",
-        "commitHash": "3082fdf242f838e711aae069383905e760b56525",
+        "commitHash": "32e76fa07993cc68aac4c6963a549be243e867d5",
         "author": "Mubin"
       },
       {
-        "id": "feature-bd86cdc9",
+        "id": "feature-4691b9a4",
         "title": "Phase 1 - Auto-select assigned mentor in MenteeSlotBooking",
         "description": "Phase 1 - Auto-select assigned mentor in MenteeSlotBooking",
         "status": "released",
         "dateAdded": "2025-10-21",
-        "commitHash": "bd86cdc96ad85dd09424ace523984fd64970eb69",
+        "commitHash": "4691b9a4965c652b9d936a8d40ff550ff9a12535",
         "author": "Mubin"
       },
       {
-        "id": "feature-19f69f05",
+        "id": "feature-e87fc669",
         "title": "Add admin journey viewer with campus filtering and learner dashboard button",
         "description": "Add admin journey viewer with campus filtering and learner dashboard button",
         "status": "released",
         "dateAdded": "2025-10-15",
-        "commitHash": "19f69f05dc1146dd492bc6986927270ce871d0b7",
+        "commitHash": "e87fc669d331de5a652be322df867e735a661423",
         "author": "Mubin"
       },
       {
-        "id": "feature-b2977702",
+        "id": "feature-53221fd1",
         "title": "Add profile completion modal for incomplete user profiles",
         "description": "Add profile completion modal for incomplete user profiles",
         "status": "released",
         "dateAdded": "2025-10-07",
-        "commitHash": "b2977702fe9c3d3e8b12b04ba1524e17efa8cd35",
+        "commitHash": "53221fd1038c4952d7d22f58a9654b7d88a0334d",
         "author": "Mubin"
       },
       {
-        "id": "feature-f25d39ec",
+        "id": "feature-3c2397b3",
         "title": "Complete dashboard overhaul with uniform layouts, date grouping, and pending item prioritization",
         "description": "Complete dashboard overhaul with uniform layouts, date grouping, and pending item prioritization",
         "status": "released",
         "dateAdded": "2025-10-07",
-        "commitHash": "f25d39ecc2d3c503ab5197314ade8c55b6e96782",
+        "commitHash": "3c2397b3e37bc27dd6b51b359c27d8d759f2c8da",
         "author": "Mubin"
       },
       {
-        "id": "feature-ab515a30",
+        "id": "feature-5e8706f5",
         "title": "Implement comprehensive real-time attendance tracking system",
         "description": "Implement comprehensive real-time attendance tracking system",
         "status": "released",
         "dateAdded": "2025-10-05",
-        "commitHash": "ab515a30fa11ef1ba1ef10f8dc1af2c68c284dfc",
+        "commitHash": "5e8706f5e9c6a2fcec2fda205681b6fce832fe4c",
         "author": "Mubin"
       },
       {
-        "id": "feature-343a7985",
+        "id": "feature-945d5452",
         "title": "Complete dynamic feature tracking system and fix compilation errors",
         "description": "Complete dynamic feature tracking system and fix compilation errors",
         "status": "released",
         "dateAdded": "2025-10-05",
-        "commitHash": "343a79851072c4b118977084b6357a5edff07e6b",
+        "commitHash": "945d5452fe98f7adac5d3b7e73a21d98196019be",
         "author": "Mubin"
       },
       {
-        "id": "feature-1a45b370",
-        "title": "WIP - Smart Mentor Matching Algorithm",
-        "description": "WIP - Smart Mentor Matching Algorithm",
-        "status": "released",
-        "dateAdded": "2025-10-05",
-        "commitHash": "1a45b3709541c5828d357235552ab7da4573e04a",
-        "author": "Mubin"
-      },
-      {
-        "id": "feature-c55ee7a3",
+        "id": "feature-bf9a1502",
         "title": "Advanced Analytics Dashboard",
         "description": "Advanced Analytics Dashboard",
         "status": "coming-soon",
         "dateAdded": "2025-10-05",
-        "commitHash": "c55ee7a3daed59d96b73ba0bd9f5ed4154eedb01",
+        "commitHash": "bf9a1502f368dcc7af4ebb971bfbf40498f0473b",
         "author": "Mubin",
         "estimatedRelease": "2025-10-19"
       },
       {
-        "id": "feature-03ac25a7",
+        "id": "feature-8f4da32a",
         "title": "Implement complete mentorship system with Phase 1 & 2",
         "description": "Implement complete mentorship system with Phase 1 & 2",
         "status": "released",
         "dateAdded": "2025-10-04",
-        "commitHash": "03ac25a7a96392081fb669dbf0931b73f8463a3e",
+        "commitHash": "8f4da32a02dbe60505f5de6b2d1e537cbe3d94bb",
         "author": "Mubin"
       }
     ],
     "released": [
       {
-        "id": "feature-055de468",
+        "id": "feature-b7536d36",
+        "title": "Add student phase breakdown and improve days calculation in journey tracker",
+        "description": "Add student phase breakdown and improve days calculation in journey tracker",
+        "status": "released",
+        "dateAdded": "2025-12-19",
+        "commitHash": "b7536d3615a983e6bf3ce8a32664f025ed11215c",
+        "author": "Code-BySachin"
+      },
+      {
+        "id": "feature-b570fd96",
         "title": "Add dedicated Reviews page with UI improvements and fix permission issues",
         "description": "Add dedicated Reviews page with UI improvements and fix permission issues",
         "status": "released",
         "dateAdded": "2025-11-11",
-        "commitHash": "055de4683514c4983380206d1a2d16a1093e4f9d",
+        "commitHash": "b570fd960b86872350f4bc560cc95d68c51b5d88",
         "author": "Mubin"
       },
       {
-        "id": "feature-81cb6c5e",
+        "id": "feature-197b2290",
         "title": "Simplify review flow - unified path from home dashboard",
         "description": "Simplify review flow - unified path from home dashboard",
         "status": "released",
         "dateAdded": "2025-11-10",
-        "commitHash": "81cb6c5e56a8cc2216887bb270d0e250212d035e",
+        "commitHash": "197b2290e70e8b5bbbde13dbd535579e9484261b",
         "author": "Mubin"
       },
       {
-        "id": "feature-f143525b",
+        "id": "feature-ed03bcc8",
         "title": "Add context-aware review system - mentor vs mentee detection",
         "description": "Add context-aware review system - mentor vs mentee detection",
         "status": "released",
         "dateAdded": "2025-11-10",
-        "commitHash": "f143525b09d51ed3306931b009ebef19034891ab",
+        "commitHash": "ed03bcc81bfd1fa55ee9c7593c669c0b9f918c50",
         "author": "Mubin"
       },
       {
-        "id": "feature-89aecefb",
+        "id": "feature-561a991e",
         "title": "Optimize dashboard and improve UX",
         "description": "Optimize dashboard and improve UX",
         "status": "released",
         "dateAdded": "2025-10-22",
-        "commitHash": "89aecefb2ad14f49d6afbd81ffe769d48931d634",
+        "commitHash": "561a991e3fb312fe78ef800f55f51c7da52c2d93",
         "author": "Mubin"
       },
       {
-        "id": "feature-e7c1989a",
+        "id": "feature-3b177f4e",
         "title": "Add Past and Upcoming Sessions to My Sessions tab",
         "description": "Add Past and Upcoming Sessions to My Sessions tab",
         "status": "released",
         "dateAdded": "2025-10-21",
-        "commitHash": "e7c1989aa0585135b7437adf7b14236f4b7d27e8",
+        "commitHash": "3b177f4ec97ed770da7080ef61a1c676bfbd6f6f",
         "author": "Mubin"
       },
       {
-        "id": "feature-aa453858",
+        "id": "feature-90e227c3",
         "title": "Phase 5 - Auto-requeue cancelled sessions",
         "description": "Phase 5 - Auto-requeue cancelled sessions",
         "status": "released",
         "dateAdded": "2025-10-21",
-        "commitHash": "aa453858dea79a5fb90e652a08f5b36879f621c2",
+        "commitHash": "90e227c36df56e405882da75f23d150ec9f19f3e",
         "author": "Mubin"
       },
       {
-        "id": "feature-82d9708a",
+        "id": "feature-77059d0a",
         "title": "Phase 4 Complete - Rolling Queue System Fully Implemented",
         "description": "Phase 4 Complete - Rolling Queue System Fully Implemented",
         "status": "released",
         "dateAdded": "2025-10-21",
-        "commitHash": "82d9708a790b24a5a64454a551258136f6954da3",
+        "commitHash": "77059d0ac18b7ea4b5ae1e1f61ee89b1bc7b7c91",
         "author": "Mubin"
       },
       {
-        "id": "feature-8c408c51",
+        "id": "feature-f4a962cb",
         "title": "Implement Phase 4, Step 4 - Queue UI Components",
         "description": "Implement Phase 4, Step 4 - Queue UI Components",
         "status": "released",
         "dateAdded": "2025-10-21",
-        "commitHash": "8c408c518971158f92cba81af9ffdf34c5ec6714",
+        "commitHash": "f4a962cb654aba1a89dd09b3756310619a6bdf0f",
         "author": "Mubin"
       },
       {
-        "id": "feature-c5a79394",
+        "id": "feature-09ed6345",
         "title": "Implement Phase 4, Step 3 - Queue Integration",
         "description": "Implement Phase 4, Step 3 - Queue Integration",
         "status": "released",
         "dateAdded": "2025-10-21",
-        "commitHash": "c5a7939410690786333a7a0958175ec9e1403458",
+        "commitHash": "09ed634561f939e919eb3b46a79dfcf4a2bd341f",
         "author": "Mubin"
       },
       {
-        "id": "feature-1d965510",
+        "id": "feature-75290b8a",
         "title": "Implement Phase 4, Step 2 - Rolling Queue Service",
         "description": "Implement Phase 4, Step 2 - Rolling Queue Service",
         "status": "released",
         "dateAdded": "2025-10-21",
-        "commitHash": "1d9655106fd06bbc2181592729c2dc9815631824",
+        "commitHash": "75290b8aa7598a0508d70cbe4c1e5629cc93741f",
         "author": "Mubin"
       },
       {
-        "id": "feature-3082fdf2",
+        "id": "feature-32e76fa0",
         "title": "Implement Phase 3 - Academic Associate Admin UI",
         "description": "Implement Phase 3 - Academic Associate Admin UI",
         "status": "released",
         "dateAdded": "2025-10-21",
-        "commitHash": "3082fdf242f838e711aae069383905e760b56525",
+        "commitHash": "32e76fa07993cc68aac4c6963a549be243e867d5",
         "author": "Mubin"
       },
       {
-        "id": "feature-bd86cdc9",
+        "id": "feature-4691b9a4",
         "title": "Phase 1 - Auto-select assigned mentor in MenteeSlotBooking",
         "description": "Phase 1 - Auto-select assigned mentor in MenteeSlotBooking",
         "status": "released",
         "dateAdded": "2025-10-21",
-        "commitHash": "bd86cdc96ad85dd09424ace523984fd64970eb69",
+        "commitHash": "4691b9a4965c652b9d936a8d40ff550ff9a12535",
         "author": "Mubin"
       },
       {
-        "id": "feature-19f69f05",
+        "id": "feature-e87fc669",
         "title": "Add admin journey viewer with campus filtering and learner dashboard button",
         "description": "Add admin journey viewer with campus filtering and learner dashboard button",
         "status": "released",
         "dateAdded": "2025-10-15",
-        "commitHash": "19f69f05dc1146dd492bc6986927270ce871d0b7",
+        "commitHash": "e87fc669d331de5a652be322df867e735a661423",
         "author": "Mubin"
       },
       {
-        "id": "feature-b2977702",
+        "id": "feature-53221fd1",
         "title": "Add profile completion modal for incomplete user profiles",
         "description": "Add profile completion modal for incomplete user profiles",
         "status": "released",
         "dateAdded": "2025-10-07",
-        "commitHash": "b2977702fe9c3d3e8b12b04ba1524e17efa8cd35",
+        "commitHash": "53221fd1038c4952d7d22f58a9654b7d88a0334d",
         "author": "Mubin"
       },
       {
-        "id": "feature-f25d39ec",
+        "id": "feature-3c2397b3",
         "title": "Complete dashboard overhaul with uniform layouts, date grouping, and pending item prioritization",
         "description": "Complete dashboard overhaul with uniform layouts, date grouping, and pending item prioritization",
         "status": "released",
         "dateAdded": "2025-10-07",
-        "commitHash": "f25d39ecc2d3c503ab5197314ade8c55b6e96782",
+        "commitHash": "3c2397b3e37bc27dd6b51b359c27d8d759f2c8da",
         "author": "Mubin"
       },
       {
-        "id": "feature-ab515a30",
+        "id": "feature-5e8706f5",
         "title": "Implement comprehensive real-time attendance tracking system",
         "description": "Implement comprehensive real-time attendance tracking system",
         "status": "released",
         "dateAdded": "2025-10-05",
-        "commitHash": "ab515a30fa11ef1ba1ef10f8dc1af2c68c284dfc",
+        "commitHash": "5e8706f5e9c6a2fcec2fda205681b6fce832fe4c",
         "author": "Mubin"
       },
       {
-        "id": "feature-343a7985",
+        "id": "feature-945d5452",
         "title": "Complete dynamic feature tracking system and fix compilation errors",
         "description": "Complete dynamic feature tracking system and fix compilation errors",
         "status": "released",
         "dateAdded": "2025-10-05",
-        "commitHash": "343a79851072c4b118977084b6357a5edff07e6b",
+        "commitHash": "945d5452fe98f7adac5d3b7e73a21d98196019be",
         "author": "Mubin"
       },
       {
-        "id": "feature-1a45b370",
-        "title": "WIP - Smart Mentor Matching Algorithm",
-        "description": "WIP - Smart Mentor Matching Algorithm",
-        "status": "released",
-        "dateAdded": "2025-10-05",
-        "commitHash": "1a45b3709541c5828d357235552ab7da4573e04a",
-        "author": "Mubin"
-      },
-      {
-        "id": "feature-03ac25a7",
+        "id": "feature-8f4da32a",
         "title": "Implement complete mentorship system with Phase 1 & 2",
         "description": "Implement complete mentorship system with Phase 1 & 2",
         "status": "released",
         "dateAdded": "2025-10-04",
-        "commitHash": "03ac25a7a96392081fb669dbf0931b73f8463a3e",
+        "commitHash": "8f4da32a02dbe60505f5de6b2d1e537cbe3d94bb",
         "author": "Mubin"
       }
     ],
     "comingSoon": [
       {
-        "id": "feature-c55ee7a3",
+        "id": "feature-c1107517",
+        "title": "Chore: Add safe .env.example with placeholders only",
+        "description": "Chore: Add safe .env.example with placeholders only",
+        "status": "coming-soon",
+        "dateAdded": "2025-12-19",
+        "commitHash": "c1107517ad2e2a4d5ae73f0c12b6daa1ee353cd4",
+        "author": "Code-BySachin",
+        "estimatedRelease": "2026-01-02"
+      },
+      {
+        "id": "feature-bf9a1502",
         "title": "Advanced Analytics Dashboard",
         "description": "Advanced Analytics Dashboard",
         "status": "coming-soon",
         "dateAdded": "2025-10-05",
-        "commitHash": "c55ee7a3daed59d96b73ba0bd9f5ed4154eedb01",
+        "commitHash": "bf9a1502f368dcc7af4ebb971bfbf40498f0473b",
         "author": "Mubin",
         "estimatedRelease": "2025-10-19"
       }

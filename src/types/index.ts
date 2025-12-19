@@ -766,3 +766,22 @@ export interface StudentAAMapping {
   assigned_at: Date;
   assigned_by: string;
 }
+
+// Phase Approval interface - for locking phase progression
+export interface PhaseApproval {
+  id: string;
+  student_id: string;
+  student_name?: string; // Denormalized for easy identification
+  current_phase_id: string;
+  current_phase_name?: string; // Denormalized for display
+  next_phase_id: string;
+  next_phase_name?: string; // Denormalized for display
+  requested_at: Date;
+  status: 'pending' | 'approved' | 'rejected';
+  approved_by?: string; // admin or academic associate user ID
+  approved_by_name?: string; // Denormalized for display
+  approved_at?: Date;
+  rejection_reason?: string;
+  created_at: Date;
+  updated_at: Date;
+}
