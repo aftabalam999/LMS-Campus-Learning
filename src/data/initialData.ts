@@ -16,7 +16,7 @@ export interface TopicDetails {
 export const initialPhases: Array<{ name: string; order: number; isSenior?: boolean }> = [
   {
     name: 'Super mentor Phase',
-    order: -1,
+    order: 9,
     isSenior: true
   },
   {
@@ -57,7 +57,7 @@ export const initialPhases: Array<{ name: string; order: number; isSenior?: bool
   },
   {
     name: 'Self Learning Space',
-    order: -1
+    order: 10
   }
 ];
 

@@ -38,6 +38,8 @@ export interface Phase {
   name: string;
   order: number;
   isSenior?: boolean; // optional flag to mark mentor/senior phases
+  active_students_count?: number; // Number of students currently working in this phase
+  completed_students_count?: number; // Number of students who have completed this phase
   created_at: Date;
   updated_at: Date;
 }
