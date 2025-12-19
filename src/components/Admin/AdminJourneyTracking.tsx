@@ -47,6 +47,12 @@ const AdminJourneyTracking: React.FC = () => {
     goals: Array<{ id: string; goal_text: string; created_at: Date; status: string }>;
   } | null>(null);
 
+  const [selectedStudentPhases, setSelectedStudentPhases] = useState<{
+    studentId: string;
+    studentName: string;
+    phases: Array<{ phaseId: string; phaseName: string; daysSpent: number; topicCount: number; order: number }>;
+  } | null>(null);
+
   const calculateStudentStats = useCallback(async (): Promise<StudentStats[]> => {
     try {
       // Get all students and goals to show ACTIVE engagement (not just completion)
@@ -63,19 +69,70 @@ const AdminJourneyTracking: React.FC = () => {
       // Filter goals to only include goals from students
       const studentGoals = goals.filter((goal: any) => studentIds.has(goal.student_id));
 
-      const stats: StudentStats[] = [];
+      // Group goals by student and phase to find the earliest start date per phase
+      const studentPhaseMap = new Map<string, Map<string, Date>>();
+      
       studentGoals.forEach((goal: any) => {
         const student = students.find((s: any) => s.id === goal.student_id);
-
-        // Always prefer the actual goal creation timestamp for phase timing
         const goalCreatedAt = goal.created_at ? new Date(goal.created_at) : null;
         const fallbackStart = student && (student as any).campus_joining_date
           ? new Date((student as any).campus_joining_date)
           : new Date();
-        const startDate = goalCreatedAt || fallbackStart;
+        const goalDate = goalCreatedAt || fallbackStart;
+
+        // Track earliest date per student per phase
+        if (!studentPhaseMap.has(goal.student_id)) {
+          studentPhaseMap.set(goal.student_id, new Map());
+        }
+        const phaseMap = studentPhaseMap.get(goal.student_id)!;
+        
+        if (!phaseMap.has(goal.phase_id)) {
+          phaseMap.set(goal.phase_id, goalDate);
+        } else {
+          const existingDate = phaseMap.get(goal.phase_id)!;
+          if (goalDate < existingDate) {
+            phaseMap.set(goal.phase_id, goalDate);
+          }
+        }
+      });
+
+      const stats: StudentStats[] = [];
+      studentGoals.forEach((goal: any) => {
+        const student = students.find((s: any) => s.id === goal.student_id);
+        const goalCreatedAt = goal.created_at ? new Date(goal.created_at) : null;
+        const fallbackStart = student && (student as any).campus_joining_date
+          ? new Date((student as any).campus_joining_date)
+          : new Date();
+        const goalDate = goalCreatedAt || fallbackStart;
+
+        // Use the earliest date for this student's phase
+        const phaseStartDate = studentPhaseMap.get(goal.student_id)?.get(goal.phase_id) || goalDate;
 
         const now = new Date();
-        const daysSpent = Math.max(0, Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
+        
+        // Calculate calendar days: normalize both dates to midnight and count days
+        const startOfDay = new Date(phaseStartDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        
+        const today = new Date(now);
+        today.setHours(0, 0, 0, 0);
+        
+        const daysDifference = Math.floor((today.getTime() - startOfDay.getTime()) / (1000 * 60 * 60 * 24));
+        const daysSpent = Math.max(1, daysDifference); // Minimum 1 day on start date, increments at midnight
+
+        // Debug logging for the specific user
+        if (userMap.get(goal.student_id)?.includes('experimental')) {
+          console.log('Debug - experimental user goal:', {
+            studentName: userMap.get(goal.student_id),
+            goalId: goal.id,
+            goalCreatedAt: goalCreatedAt ? goalCreatedAt.toISOString() : 'null',
+            phaseStartDate: phaseStartDate.toISOString(),
+            now: now.toISOString(),
+            daysSpent,
+            phaseId: goal.phase_id,
+            topicId: goal.topic_id
+          });
+        }
 
         stats.push({
           studentId: goal.student_id,
@@ -83,7 +140,7 @@ const AdminJourneyTracking: React.FC = () => {
           phaseId: goal.phase_id,
           topicId: goal.topic_id,
           daysSpent,
-          earliestGoalDate: startDate
+          earliestGoalDate: phaseStartDate
         });
       });
 
@@ -138,6 +195,9 @@ const AdminJourneyTracking: React.FC = () => {
         const phaseStudentStats = phaseStats.get(phase.id) || [];
         const phaseTopics = topicsByPhase.get(phase.id) || [];
 
+        // Calculate unique students in this phase
+        const uniquePhaseStudents = new Set(phaseStudentStats.map(stat => stat.studentId));
+
         // Calculate average days spent for phase
         const totalDays = phaseStudentStats.reduce((sum, stat) => sum + stat.daysSpent, 0);
         const averageDaysSpent = phaseStudentStats.length > 0 ? Math.round(totalDays / phaseStudentStats.length) : 0;
@@ -161,7 +221,7 @@ const AdminJourneyTracking: React.FC = () => {
         orderedPhaseDataArray.push({
           phaseId: phase.id,
           phaseName: phase.name,
-          totalStudents: phaseStudentStats.length,
+          totalStudents: uniquePhaseStudents.size, // Count unique students, not total goals
           averageDaysSpent,
           topics: topicData,
           order: phase.order
@@ -173,6 +233,9 @@ const AdminJourneyTracking: React.FC = () => {
       standalonePhases.forEach((phase: any) => {
         const phaseStudentStats = phaseStats.get(phase.id) || [];
         const phaseTopics = topicsByPhase.get(phase.id) || [];
+
+        // Calculate unique students in this phase
+        const uniquePhaseStudents = new Set(phaseStudentStats.map(stat => stat.studentId));
 
         // Calculate average days spent for phase
         const totalDays = phaseStudentStats.reduce((sum, stat) => sum + stat.daysSpent, 0);
@@ -197,7 +260,7 @@ const AdminJourneyTracking: React.FC = () => {
         standalonePhaseDataArray.push({
           phaseId: phase.id,
           phaseName: phase.name,
-          totalStudents: phaseStudentStats.length,
+          totalStudents: uniquePhaseStudents.size, // Count unique students, not total goals
           averageDaysSpent,
           topics: topicData,
           order: phase.order
@@ -293,6 +356,62 @@ const AdminJourneyTracking: React.FC = () => {
       console.error('Error fetching student goals:', error);
     }
   }, []);
+
+  const handleStudentClick = useCallback(async (studentId: string, studentName: string) => {
+    try {
+      // Get all phases
+      const phases = await PhaseService.getAllPhases();
+      const phaseMap = new Map(phases.map((p: any) => [p.id, { name: p.name, order: p.order }]));
+
+      // Filter stats for this student
+      const studentPhaseStats = studentStats.filter(stat => stat.studentId === studentId);
+
+      // Group by phase and calculate days spent
+      const phaseDataMap = new Map<string, { daysSpent: number; topicCount: number; order: number }>();
+
+      studentPhaseStats.forEach(stat => {
+        const phaseInfo = phaseMap.get(stat.phaseId);
+        if (!phaseInfo) return;
+
+        if (!phaseDataMap.has(stat.phaseId)) {
+          phaseDataMap.set(stat.phaseId, {
+            daysSpent: stat.daysSpent,
+            topicCount: 1,
+            order: phaseInfo.order
+          });
+        } else {
+          const existing = phaseDataMap.get(stat.phaseId)!;
+          // Use the maximum days spent for the phase
+          existing.daysSpent = Math.max(existing.daysSpent, stat.daysSpent);
+          existing.topicCount += 1;
+        }
+      });
+
+      // Convert to array and sort by phase order
+      const phaseDetails = Array.from(phaseDataMap.entries())
+        .map(([phaseId, data]) => ({
+          phaseId,
+          phaseName: phaseMap.get(phaseId)?.name || 'Unknown Phase',
+          daysSpent: data.daysSpent,
+          topicCount: data.topicCount,
+          order: data.order
+        }))
+        .sort((a, b) => {
+          // Sort standalone phases (order < 0) to the end
+          if (a.order < 0 && b.order >= 0) return 1;
+          if (b.order < 0 && a.order >= 0) return -1;
+          return a.order - b.order;
+        });
+
+      setSelectedStudentPhases({
+        studentId,
+        studentName,
+        phases: phaseDetails
+      });
+    } catch (error) {
+      console.error('Error fetching student phase data:', error);
+    }
+  }, [studentStats]);
 
   useEffect(() => {
     loadTrackingData();
@@ -518,7 +637,19 @@ const AdminJourneyTracking: React.FC = () => {
                   className="flex items-center justify-between p-3 bg-gray-50 rounded-md border border-gray-100"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-gray-900 font-medium">{student.studentName}</span>
+                    <span 
+                      className="text-gray-900 font-medium cursor-pointer hover:text-blue-600 hover:underline transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const studentStat = studentStats.find(s => s.studentName === student.studentName);
+                        if (studentStat) {
+                          handleStudentClick(studentStat.studentId, student.studentName);
+                        }
+                      }}
+                      title="Click to see phase breakdown"
+                    >
+                      {student.studentName}
+                    </span>
                     <span 
                       className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded cursor-pointer hover:bg-gray-300 transition-colors"
                       onClick={(e) => {
@@ -556,6 +687,104 @@ const AdminJourneyTracking: React.FC = () => {
           <div className="flex justify-end p-6 border-t bg-gray-50">
             <button
               onClick={() => setSelectedTopic(null)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Student Phase Breakdown Modal */}
+    {selectedStudentPhases && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[80vh] overflow-hidden">
+          <div className="flex items-center justify-between p-6 border-b">
+            <div className="flex items-center space-x-3">
+              <Target className="h-6 w-6 text-blue-600" />
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">{selectedStudentPhases.studentName}</h2>
+                <p className="text-sm text-gray-600">Days Spent in Each Phase</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setSelectedStudentPhases(null)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+
+          <div className="p-6 overflow-y-auto max-h-[60vh]">
+            <div className="mb-4">
+              <div className="flex items-center justify-between text-sm text-gray-600">
+                <span>Total Phases: {selectedStudentPhases.phases.length}</span>
+                <span>Total Days: {selectedStudentPhases.phases.reduce((sum, p) => sum + p.daysSpent, 0)} days</span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {selectedStudentPhases.phases.map((phase) => (
+                <div
+                  key={phase.phaseId}
+                  className={`p-4 rounded-lg border ${
+                    phase.order < 0 
+                      ? 'bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200'
+                      : 'bg-gray-50 border-gray-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                      {phase.order < 0 ? (
+                        <div className="h-8 w-8 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
+                          <span className="text-white text-sm font-bold">S</span>
+                        </div>
+                      ) : (
+                        <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                          <span className="text-white text-sm font-bold">{phase.order + 1}</span>
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="text-base font-semibold text-gray-900">{phase.phaseName}</h3>
+                        <p className="text-xs text-gray-500">
+                          {phase.topicCount} topic{phase.topicCount !== 1 ? 's' : ''}
+                          {phase.order < 0 && ' • Self Learning'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-gray-200">
+                      <Clock className="h-5 w-5 text-blue-600" />
+                      <span className="text-lg font-bold text-gray-900">{phase.daysSpent}</span>
+                      <span className="text-sm text-gray-600">days</span>
+                    </div>
+                  </div>
+                  <div className="mt-3 bg-white rounded-md p-2">
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className={`h-2 rounded-full transition-all duration-300 ${
+                          phase.order < 0 ? 'bg-purple-600' : 'bg-blue-600'
+                        }`}
+                        style={{ 
+                          width: `${Math.min(100, (phase.daysSpent / Math.max(...selectedStudentPhases.phases.map(p => p.daysSpent))) * 100)}%` 
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {selectedStudentPhases.phases.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                No phase data available for this student.
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end p-6 border-t bg-gray-50">
+            <button
+              onClick={() => setSelectedStudentPhases(null)}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               Close
