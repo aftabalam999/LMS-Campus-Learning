@@ -38,6 +38,8 @@ export interface Phase {
   name: string;
   order: number;
   isSenior?: boolean; // optional flag to mark mentor/senior phases
+  active_students_count?: number; // Number of students currently working in this phase
+  completed_students_count?: number; // Number of students who have completed this phase
   created_at: Date;
   updated_at: Date;
 }
@@ -765,4 +767,23 @@ export interface StudentAAMapping {
   phase?: string;
   assigned_at: Date;
   assigned_by: string;
+}
+
+// Phase Approval interface - for locking phase progression
+export interface PhaseApproval {
+  id: string;
+  student_id: string;
+  student_name?: string; // Denormalized for easy identification
+  current_phase_id: string;
+  current_phase_name?: string; // Denormalized for display
+  next_phase_id: string;
+  next_phase_name?: string; // Denormalized for display
+  requested_at: Date;
+  status: 'pending' | 'approved' | 'rejected';
+  approved_by?: string; // admin or academic associate user ID
+  approved_by_name?: string; // Denormalized for display
+  approved_at?: Date;
+  rejection_reason?: string;
+  created_at: Date;
+  updated_at: Date;
 }
