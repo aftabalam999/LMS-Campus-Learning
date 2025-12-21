@@ -41,6 +41,7 @@ export default function Navigation() {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showWhatsNewModal, setShowWhatsNewModal] = useState(false);
@@ -52,12 +53,13 @@ export default function Navigation() {
         if (showProfileModal) setShowProfileModal(false);
         if (showBugModal) setShowBugModal(false);
         if (showUserMenu) setShowUserMenu(false);
+        if (showMoreMenu) setShowMoreMenu(false);
         if (showWhatsNewModal) setShowWhatsNewModal(false);
       }
     };
     document.addEventListener('keydown', handleEsc);
     return () => document.removeEventListener('keydown', handleEsc);
-  }, [showProfileModal, showBugModal, showUserMenu, showWhatsNewModal]);
+  }, [showProfileModal, showBugModal, showUserMenu, showMoreMenu, showWhatsNewModal]);
 
   // Fetch pending actions count
   useEffect(() => {
@@ -199,33 +201,43 @@ export default function Navigation() {
                 
                 {/* More items dropdown */}
                 {filteredNavItems.length > 4 && (
-                  <div className="relative group">
+                  <div className="relative">
                     <button
+                      onClick={() => setShowMoreMenu(!showMoreMenu)}
                       className="flex items-center gap-1 px-2 py-2 rounded text-xs font-medium text-gray-700 hover:bg-gray-100 transition-colors flex-shrink-0"
                       title="More"
                     >
                       <Menu size={16} />
                       <span className="hidden lg:inline">More</span>
                     </button>
-                    <div className="absolute right-0 top-full mt-1 bg-white rounded shadow-lg border border-gray-200 hidden group-hover:block z-40 min-w-max">
-                      {filteredNavItems.slice(4).map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <Link
-                            key={item.path}
-                            to={item.path}
-                            className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${
-                              isActive(item.path)
-                                ? 'bg-primary-50 text-primary-700'
-                                : 'text-gray-700 hover:bg-gray-100'
-                            }`}
-                          >
-                            <Icon className="h-4 w-4" />
-                            {item.label}
-                          </Link>
-                        );
-                      })}
-                    </div>
+                    {showMoreMenu && (
+                      <>
+                        <div 
+                          className="fixed inset-0 z-10" 
+                          onClick={() => setShowMoreMenu(false)}
+                        />
+                        <div className="absolute right-0 top-full mt-1 bg-white rounded shadow-lg border border-gray-200 z-40 min-w-max">
+                          {filteredNavItems.slice(4).map((item) => {
+                            const Icon = item.icon;
+                            return (
+                              <Link
+                                key={item.path}
+                                to={item.path}
+                                onClick={() => setShowMoreMenu(false)}
+                                className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${
+                                  isActive(item.path)
+                                    ? 'bg-primary-50 text-primary-700'
+                                    : 'text-gray-700 hover:bg-gray-100'
+                                }`}
+                              >
+                                <Icon className="h-4 w-4" />
+                                {item.label}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
