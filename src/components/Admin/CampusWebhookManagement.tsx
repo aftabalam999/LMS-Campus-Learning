@@ -13,10 +13,7 @@ const CAMPUSES = [
   'Kishanganj',
   'Pune',
   'Raigarh',
-  'Sarjapura',
-  'Bageshree',
-  'Malhar',
-  'Bhairav'
+  'Sarjapura'
 ];
 
 const CampusWebhookManagement: React.FC = () => {
