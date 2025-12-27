@@ -787,3 +787,31 @@ export interface PhaseApproval {
   created_at: Date;
   updated_at: Date;
 }
+
+// Campus Webhook interface - for storing webhook URLs per campus
+export interface CampusWebhook {
+  id: string;
+  campus: string;
+  webhook_url: string;
+  created_by: string;
+  created_by_name?: string;
+  updated_by?: string;
+  updated_by_name?: string;
+  created_at: Date;
+  updated_at: Date;
+}
+
+// Webhook Change Notification interface
+export interface WebhookChangeNotification {
+  id: string;
+  campus: string;
+  changed_by: string;
+  changed_by_name?: string;
+  old_webhook_url?: string;
+  new_webhook_url: string;
+  change_type: 'created' | 'updated' | 'deleted';
+  timestamp: Date;
+  is_read: boolean;
+  read_by?: string[];
+  created_at: Date;
+}

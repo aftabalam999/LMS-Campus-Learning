@@ -18,6 +18,8 @@ import CampusScheduleAdmin from './CampusScheduleAdmin';
 import HouseStatsAdmin from './HouseStatsAdmin';
 import AdminReviewCompliance from './AdminReviewCompliance';
 import PhaseApprovalManagement from './PhaseApprovalManagement';
+import CampusWebhookManagement from './CampusWebhookManagement';
+import WebhookNotificationBell from './WebhookNotificationBell';
 
 
 const AdminDashboard: React.FC = () => {
@@ -67,6 +69,7 @@ const AdminDashboard: React.FC = () => {
       { id: 'database', label: 'Database Operations' },
       { id: 'bug-reports', label: 'Bug Reports' },
       { id: 'mentee-reviews', label: 'Mentee Review Categories' },
+      { id: 'webhooks', label: 'Campus Webhooks' },
     ],
   }), []);
 
@@ -114,19 +117,24 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
-      {/* Header with Learners Dashboard Button */}
+      {/* Header with Learners Dashboard Button and Notification Bell */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-        <button
-          onClick={() => navigate('/student/dashboard')}
-          className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
-        >
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z" />
-          </svg>
-          <span>Learners Dashboard</span>
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Webhook Notification Bell */}
+          <WebhookNotificationBell />
+          
+          <button
+            onClick={() => navigate('/student/dashboard')}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z" />
+            </svg>
+            <span>Learners Dashboard</span>
+          </button>
+        </div>
       </div>
 
       {/* Main Tabs */}
@@ -356,6 +364,11 @@ const AdminDashboard: React.FC = () => {
         {mainTab === 'backend' && subTab === 'mentee-reviews' && userData?.role !== 'academic_associate' && (
           <div className="p-6">
             <MenteeReviewCategoriesAdmin />
+          </div>
+        )}
+        {mainTab === 'backend' && subTab === 'webhooks' && userData?.role !== 'academic_associate' && (
+          <div className="p-6">
+            <CampusWebhookManagement />
           </div>
         )}
       </div>

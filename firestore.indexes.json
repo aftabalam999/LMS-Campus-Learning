@@ -303,6 +303,20 @@
           "order": "DESCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "webhook_change_notifications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "is_read",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamp",
+          "order": "DESCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": []

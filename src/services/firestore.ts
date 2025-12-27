@@ -89,7 +89,9 @@ export const COLLECTIONS = {
   MENTOR_AVAILABILITY: 'mentor_availability',
   CAMPUS_SCHEDULES: 'campus_schedules',
   HOUSE_STATS: 'house_stats',
-  PHASE_APPROVALS: 'phase_approvals'
+  PHASE_APPROVALS: 'phase_approvals',
+  CAMPUS_WEBHOOKS: 'campus_webhooks',
+  WEBHOOK_CHANGE_NOTIFICATIONS: 'webhook_change_notifications'
 };
 
 // Generic CRUD operations

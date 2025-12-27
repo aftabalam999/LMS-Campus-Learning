@@ -7,6 +7,8 @@
  * - Daily activity reports
  */
 
+import { WebhookService } from './webhookService';
+
 export interface DiscordUser {
   name: string;
   discord_user_id?: string;
@@ -26,7 +28,7 @@ export interface AttendanceSummary {
 }
 
 export class DiscordService {
-  // Webhook URLs for different purposes
+  // Fallback webhook URLs from environment (used if database webhooks are not configured)
   private static WEBHOOK_URL = process.env.REACT_APP_DISCORD_WEBHOOK_URL || '';
   private static WEBHOOK_DHARAMSHALA = process.env.REACT_APP_DISCORD_WEBHOOK_DHARAMSHALA || '';
   private static WEBHOOK_DANTEWADA = process.env.REACT_APP_DISCORD_WEBHOOK_DANTEWADA || '';
@@ -39,6 +41,10 @@ export class DiscordService {
   
   private static RATE_LIMIT_DELAY = 2000; // 2 seconds between requests (safe: 30/min limit)
   private static lastRequestTime = 0;
+  
+  // Cache for webhook URLs from database
+  private static webhookCache: Map<string, { url: string; timestamp: number }> = new Map();
+  private static CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
 
   /**
    * Rate limiter to prevent hitting Discord's 30 requests/minute limit
@@ -455,30 +461,98 @@ export class DiscordService {
   }
 
   /**
-   * Get webhook URL for a specific campus
+   * Get webhook URL for a specific campus from database or fallback to environment
    */
-  private static getCampusWebhook(campus: string): string {
-    const campusLower = campus.toLowerCase();
-    switch (campusLower) {
-      case 'dharamshala':
-        return this.WEBHOOK_DHARAMSHALA || this.WEBHOOK_URL;
-      case 'dantewada':
-        return this.WEBHOOK_DANTEWADA || this.WEBHOOK_URL;
-      case 'jashpur':
-        return this.WEBHOOK_JASHPUR || this.WEBHOOK_URL;
-      case 'raigarh':
-        return this.WEBHOOK_RAIGARH || this.WEBHOOK_URL;
-      case 'pune':
-        return this.WEBHOOK_PUNE || this.WEBHOOK_URL;
-      case 'sarjapur':
-      case 'sarjapura':
-        return this.WEBHOOK_SARJAPUR || this.WEBHOOK_URL;
-      case 'kishanganj':
-        return this.WEBHOOK_KISHANGANJ || this.WEBHOOK_URL;
-      case 'eternal':
-        return this.WEBHOOK_ETERNAL || this.WEBHOOK_URL;
-      default:
-        return this.WEBHOOK_URL;
+  private static async getCampusWebhook(campus: string): Promise<string> {
+    try {
+      // Check cache first
+      const cached = this.webhookCache.get(campus);
+      if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
+        return cached.url;
+      }
+
+      // Fetch from database
+      const webhookData = await WebhookService.getWebhookByCampus(campus);
+      
+      if (webhookData && webhookData.webhook_url) {
+        // Cache the URL
+        this.webhookCache.set(campus, {
+          url: webhookData.webhook_url,
+          timestamp: Date.now()
+        });
+        return webhookData.webhook_url;
+      }
+
+      // Fallback to environment variables if not found in database
+      const campusLower = campus.toLowerCase();
+      let fallbackUrl = this.WEBHOOK_URL;
+
+      switch (campusLower) {
+        case 'dharamshala':
+          fallbackUrl = this.WEBHOOK_DHARAMSHALA || this.WEBHOOK_URL;
+          break;
+        case 'dantewada':
+          fallbackUrl = this.WEBHOOK_DANTEWADA || this.WEBHOOK_URL;
+          break;
+        case 'jashpur':
+          fallbackUrl = this.WEBHOOK_JASHPUR || this.WEBHOOK_URL;
+          break;
+        case 'raigarh':
+          fallbackUrl = this.WEBHOOK_RAIGARH || this.WEBHOOK_URL;
+          break;
+        case 'pune':
+          fallbackUrl = this.WEBHOOK_PUNE || this.WEBHOOK_URL;
+          break;
+        case 'sarjapur':
+        case 'sarjapura':
+          fallbackUrl = this.WEBHOOK_SARJAPUR || this.WEBHOOK_URL;
+          break;
+        case 'kishanganj':
+          fallbackUrl = this.WEBHOOK_KISHANGANJ || this.WEBHOOK_URL;
+          break;
+        case 'eternal':
+          fallbackUrl = this.WEBHOOK_ETERNAL || this.WEBHOOK_URL;
+          break;
+      }
+
+      return fallbackUrl;
+    } catch (error) {
+      console.error('Error fetching webhook from database, using fallback:', error);
+      
+      // Fallback to environment variables on error
+      const campusLower = campus.toLowerCase();
+      switch (campusLower) {
+        case 'dharamshala':
+          return this.WEBHOOK_DHARAMSHALA || this.WEBHOOK_URL;
+        case 'dantewada':
+          return this.WEBHOOK_DANTEWADA || this.WEBHOOK_URL;
+        case 'jashpur':
+          return this.WEBHOOK_JASHPUR || this.WEBHOOK_URL;
+        case 'raigarh':
+          return this.WEBHOOK_RAIGARH || this.WEBHOOK_URL;
+        case 'pune':
+          return this.WEBHOOK_PUNE || this.WEBHOOK_URL;
+        case 'sarjapur':
+        case 'sarjapura':
+          return this.WEBHOOK_SARJAPUR || this.WEBHOOK_URL;
+        case 'kishanganj':
+          return this.WEBHOOK_KISHANGANJ || this.WEBHOOK_URL;
+        case 'eternal':
+          return this.WEBHOOK_ETERNAL || this.WEBHOOK_URL;
+        default:
+          return this.WEBHOOK_URL;
+      }
+    }
+  }
+
+  /**
+   * Clear webhook cache (useful after updating webhooks in admin panel)
+   */
+  static clearWebhookCache(campus?: string): void {
+    if (campus) {
+      this.webhookCache.delete(campus);
+    } else {
+      this.webhookCache.clear();
     }
   }
 
@@ -496,7 +570,7 @@ export class DiscordService {
     absentStudentsList: string[],
     campus?: string
   ): Promise<void> {
-    const webhookUrl = campus ? this.getCampusWebhook(campus) : this.WEBHOOK_URL;
+    const webhookUrl = campus ? await this.getCampusWebhook(campus) : this.WEBHOOK_URL;
     
     const dateStr = date.toLocaleDateString('en-IN', {
       year: 'numeric',
