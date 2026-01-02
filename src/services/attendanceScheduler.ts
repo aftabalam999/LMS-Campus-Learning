@@ -12,6 +12,7 @@ import { DiscordService } from './discordService';
 export class AttendanceScheduler {
   private static schedulerInterval: NodeJS.Timeout | null = null;
   private static isRunning = false;
+  private static lastReportDate: string | null = null; // Track last sent report date
 
   /**
    * Start the attendance scheduler
@@ -56,10 +57,13 @@ export class AttendanceScheduler {
     const now = new Date();
     const hours = now.getHours();
     const minutes = now.getMinutes();
+    const todayDate = now.toISOString().split('T')[0];
 
     // Send report at 10:00 AM (hours === 10 and minutes === 0)
-    if (hours === 10 && minutes === 0) {
+    // Only send once per day by checking lastReportDate
+    if (hours === 10 && minutes === 0 && this.lastReportDate !== todayDate) {
       console.log('⏰ It\'s 10:00 AM - Sending morning attendance reports...');
+      this.lastReportDate = todayDate; // Mark as sent for today
       await this.sendAllCampusReports();
     }
   }
@@ -105,12 +109,22 @@ export class AttendanceScheduler {
       // Get attendance statistics
       const stats: DailyAttendanceStats = await AttendanceTrackingService.getDailyStats(date, campus);
       
-      // Get student status list to find absent students
+      // Get student status list to find absent students and categorize by leave type
       const studentStatusList: StudentDailyStatus[] = await AttendanceTrackingService.getStudentDailyStatusList(date, campus);
       
       // Filter absent students (not present and not on leave)
       const absentStudents = studentStatusList
         .filter(status => !status.isPresent && !status.isOnLeave)
+        .map(status => status.student.name || status.student.email || 'Unknown');
+
+      // Get students on kitchen leave
+      const kitchenLeaveStudents = studentStatusList
+        .filter(status => status.isOnLeave && status.leaveType === 'kitchen_leave')
+        .map(status => status.student.name || status.student.email || 'Unknown');
+
+      // Get students on regular leave
+      const regularLeaveStudents = studentStatusList
+        .filter(status => status.isOnLeave && status.leaveType === 'on_leave')
         .map(status => status.student.name || status.student.email || 'Unknown');
 
       const totalStudents = stats.totalActiveStudents;
@@ -126,8 +140,11 @@ export class AttendanceScheduler {
           presentStudents,
           absentCount,
           stats.attendanceRate,
-          stats.studentsOnLeave,
-          absentStudents
+          stats.studentsOnKitchenLeave,
+          stats.studentsOnRegularLeave,
+          absentStudents,
+          kitchenLeaveStudents,
+          regularLeaveStudents
         );
       } else {
         await DiscordService.sendAttendanceReport(
@@ -136,8 +153,11 @@ export class AttendanceScheduler {
           presentStudents,
           absentCount,
           stats.attendanceRate,
-          stats.studentsOnLeave,
-          absentStudents
+          stats.studentsOnKitchenLeave,
+          stats.studentsOnRegularLeave,
+          absentStudents,
+          kitchenLeaveStudents,
+          regularLeaveStudents
         );
       }
 

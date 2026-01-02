@@ -23,6 +23,8 @@ export interface DailyAttendanceStats {
   reflectionSubmissionRate: number; // Percentage of students with reflections
   attendanceRate: number; // Percentage actually present (same as goalApprovalRate)
   studentsOnLeave: number;
+  studentsOnKitchenLeave: number; // Students on kitchen leave
+  studentsOnRegularLeave: number; // Students on regular leave
 }
 
 export interface StudentDailyStatus {
@@ -31,6 +33,7 @@ export interface StudentDailyStatus {
   hasSubmittedReflection: boolean;
   isPresent: boolean;
   isOnLeave: boolean;
+  leaveType?: 'kitchen_leave' | 'on_leave'; // Type of leave if on leave
   goalDetails?: DailyGoal;
   reflectionDetails?: DailyReflection;
 }
@@ -53,8 +56,26 @@ export class AttendanceTrackingService {
       const activeStudents = await this.getActiveStudents(campus);
       const totalActiveStudents = activeStudents.length;
 
-      // Get students on approved leave for this date
-      const studentsOnLeave = await this.getStudentsOnLeave(activeStudents.map(s => s.id), date);
+      // Get students on approved leave for this date (with leave type)
+      const studentsOnLeaveData = await this.getStudentsOnLeaveWithType(activeStudents.map(s => s.id), date);
+      
+      // Also check for students with status set to kitchen_leave or on_leave
+      const studentsWithLeaveStatus = activeStudents.filter(s => 
+        s.status === 'kitchen_leave' || s.status === 'on_leave'
+      );
+      
+      // Combine leave requests and status-based leaves
+      const leaveMap = new Map<string, 'kitchen_leave' | 'on_leave'>();
+      studentsOnLeaveData.forEach(l => leaveMap.set(l.studentId, l.leaveType));
+      studentsWithLeaveStatus.forEach(s => {
+        if (!leaveMap.has(s.id)) {
+          leaveMap.set(s.id, s.status as 'kitchen_leave' | 'on_leave');
+        }
+      });
+      
+      const studentsOnLeave = leaveMap.size;
+      const studentsOnKitchenLeave = Array.from(leaveMap.values()).filter(t => t === 'kitchen_leave').length;
+      const studentsOnRegularLeave = Array.from(leaveMap.values()).filter(t => t === 'on_leave').length;
 
       // Get approved goals for the date
       const approvedGoals = await this.getApprovedGoalsForDate(
@@ -74,7 +95,7 @@ export class AttendanceTrackingService {
       const studentsPresent = studentsWithApprovedGoals;
 
       // Calculate rates (excluding students on leave from denominators)
-      const eligibleStudents = totalActiveStudents - studentsOnLeave.length;
+      const eligibleStudents = totalActiveStudents - studentsOnLeave;
       
       return {
         date,
@@ -85,7 +106,9 @@ export class AttendanceTrackingService {
         goalApprovalRate: eligibleStudents > 0 ? (studentsWithApprovedGoals / eligibleStudents) * 100 : 0,
         reflectionSubmissionRate: eligibleStudents > 0 ? (studentsWithSubmittedReflections / eligibleStudents) * 100 : 0,
         attendanceRate: eligibleStudents > 0 ? (studentsPresent / eligibleStudents) * 100 : 0,
-        studentsOnLeave: studentsOnLeave.length
+        studentsOnLeave,
+        studentsOnKitchenLeave,
+        studentsOnRegularLeave
       };
     } catch (error) {
       console.error('Error fetching daily attendance stats:', error);
@@ -98,7 +121,9 @@ export class AttendanceTrackingService {
         goalApprovalRate: 0,
         reflectionSubmissionRate: 0,
         attendanceRate: 0,
-        studentsOnLeave: 0
+        studentsOnLeave: 0,
+        studentsOnKitchenLeave: 0,
+        studentsOnRegularLeave: 0
       };
     }
   }
@@ -108,8 +133,8 @@ export class AttendanceTrackingService {
    */
   static async getStudentDailyStatusList(date: Date, campus?: string): Promise<StudentDailyStatus[]> {
     const activeStudents = await this.getActiveStudents(campus);
-    const studentsOnLeave = await this.getStudentsOnLeave(activeStudents.map(s => s.id), date);
-    const leaveSet = new Set(studentsOnLeave);
+    const studentsOnLeaveData = await this.getStudentsOnLeaveWithType(activeStudents.map(s => s.id), date);
+    const leaveMap = new Map(studentsOnLeaveData.map(l => [l.studentId, l.leaveType]));
 
     const approvedGoals = await this.getApprovedGoalsForDate(
       activeStudents.map(s => s.id), 
@@ -127,7 +152,17 @@ export class AttendanceTrackingService {
     return activeStudents.map(student => {
       const hasApprovedGoal = goalMap.has(student.id);
       const hasSubmittedReflection = reflectionMap.has(student.id);
-      const isOnLeave = leaveSet.has(student.id);
+      
+      // Check leave type from leave_requests first, then fall back to user status
+      let leaveType = leaveMap.get(student.id);
+      let isOnLeave = leaveMap.has(student.id);
+      
+      // If no active leave request but user status indicates leave, use that
+      if (!isOnLeave && (student.status === 'kitchen_leave' || student.status === 'on_leave')) {
+        isOnLeave = true;
+        leaveType = student.status as 'kitchen_leave' | 'on_leave';
+      }
+      
       const isPresent = hasApprovedGoal && !isOnLeave; // Present if goal approved
 
       return {
@@ -136,6 +171,7 @@ export class AttendanceTrackingService {
         hasSubmittedReflection,
         isPresent,
         isOnLeave,
+        leaveType,
         goalDetails: goalMap.get(student.id),
         reflectionDetails: reflectionMap.get(student.id)
       };
@@ -320,11 +356,15 @@ export class AttendanceTrackingService {
       let students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
 
       // Filter by status, campus, and role (exclude admin and academic_associate)
+      // Include active, kitchen_leave, and on_leave students (exclude inactive, dropout, placed)
       students = students.filter(student => {
-        const isActive = !student.status || student.status === 'active';
+        const isActiveOrOnLeave = !student.status || 
+          student.status === 'active' || 
+          student.status === 'kitchen_leave' || 
+          student.status === 'on_leave';
         const matchesCampus = !campus || student.campus === campus;
         const isNotAdminRole = student.role !== 'admin' && student.role !== 'academic_associate';
-        return isActive && matchesCampus && isNotAdminRole;
+        return isActiveOrOnLeave && matchesCampus && isNotAdminRole;
       });
 
       return students;
@@ -361,6 +401,40 @@ export class AttendanceTrackingService {
       return results.flat();
     } catch (error) {
       console.error('Error fetching students on leave:', error);
+      return [];
+    }
+  }
+
+  private static async getStudentsOnLeaveWithType(studentIds: string[], date: Date): Promise<Array<{studentId: string, leaveType: 'kitchen_leave' | 'on_leave'}>> {
+    if (studentIds.length === 0) return [];
+
+    try {
+      // Batch studentIds into groups of 10 (Firestore 'in' query limit)
+      const batches = [];
+      for (let i = 0; i < studentIds.length; i += 10) {
+        batches.push(studentIds.slice(i, i + 10));
+      }
+
+      const leavePromises = batches.map(async (batch) => {
+        const leaveQuery = query(
+          collection(db, 'leave_requests'),
+          where('student_id', 'in', batch),
+          where('status', '==', 'approved'),
+          where('start_date', '<=', Timestamp.fromDate(date)),
+          where('end_date', '>=', Timestamp.fromDate(date))
+        );
+
+        const snapshot = await getDocs(leaveQuery);
+        return snapshot.docs.map(doc => ({
+          studentId: doc.data().student_id,
+          leaveType: doc.data().leave_type as 'kitchen_leave' | 'on_leave'
+        }));
+      });
+
+      const results = await Promise.all(leavePromises);
+      return results.flat();
+    } catch (error) {
+      console.error('Error fetching students on leave with type:', error);
       return [];
     }
   }
