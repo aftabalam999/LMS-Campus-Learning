@@ -12,6 +12,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { User, DailyGoal, DailyReflection, Attendance } from '../types';
+import { getISTDate } from '../utils/timezone';
 
 export interface DailyAttendanceStats {
   date: Date;
@@ -223,7 +224,7 @@ export class AttendanceTrackingService {
         }
 
         // Get recent goals (last 7 days)
-        const sevenDaysAgo = new Date();
+        const sevenDaysAgo = getISTDate();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
         
         const recentGoalsQuery = query(
@@ -292,8 +293,8 @@ export class AttendanceTrackingService {
           goal_reviewed: status.hasApprovedGoal,
           reflection_reviewed: status.hasSubmittedReflection,
           present_status: status.isOnLeave ? 'on_leave' : (status.isPresent ? 'present' : 'absent'),
-          created_at: new Date(),
-          updated_at: new Date()
+          created_at: getISTDate(),
+          updated_at: getISTDate()
         };
 
         const attendanceRef = doc(db, 'attendance', attendanceRecord.id);

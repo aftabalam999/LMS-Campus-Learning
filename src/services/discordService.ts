@@ -8,6 +8,7 @@
  */
 
 import { WebhookService } from './webhookService';
+import { getISTDate, formatISTTime } from '../utils/timezone';
 
 export interface DiscordUser {
   name: string;
@@ -124,11 +125,7 @@ export class DiscordService {
           minute: '2-digit',
           hour12: true,
         })
-      : new Date().toLocaleTimeString('en-IN', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true,
-        });
+      : formatISTTime();
 
     const embed = {
       title: '✅ Login Notification',
@@ -151,12 +148,12 @@ export class DiscordService {
           inline: true,
         },
         {
-          name: '⏰ Time',
+          name: '⏰ Time (IST)',
           value: time,
           inline: true,
         },
       ],
-      timestamp: new Date().toISOString(),
+      timestamp: getISTDate().toISOString(),
       footer: {
         text: 'Campus Learning Dashboard',
       },
@@ -182,11 +179,7 @@ export class DiscordService {
           minute: '2-digit',
           hour12: true,
         })
-      : new Date().toLocaleTimeString('en-IN', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true,
-        });
+      : formatISTTime();
 
     const joiningDate = user.campus_joining_date
       ? user.campus_joining_date.toLocaleDateString('en-IN', {
@@ -242,7 +235,7 @@ export class DiscordService {
       description: `${mentionUser} has logged in for the **first time**! Welcome aboard! 🚀`,
       color: 0xf59e0b, // Orange/Gold - to stand out
       fields,
-      timestamp: new Date().toISOString(),
+      timestamp: getISTDate().toISOString(),
       footer: {
         text: 'Campus Learning Dashboard - Welcome Team!',
       },
@@ -297,7 +290,7 @@ export class DiscordService {
           inline: false,
         },
       ],
-      timestamp: new Date().toISOString(),
+      timestamp: getISTDate().toISOString(),
       footer: {
         text: 'Campus Learning Dashboard - Hourly Report',
       },
@@ -321,7 +314,7 @@ export class DiscordService {
           title: '📊 No Logins Today',
           description: 'No users logged in today.',
           color: 0xef4444, // Red
-          timestamp: new Date().toISOString(),
+          timestamp: getISTDate().toISOString(),
           footer: {
             text: 'Campus Learning Dashboard - Daily Report',
           },
@@ -375,7 +368,7 @@ export class DiscordService {
           inline: true,
         },
       ],
-      timestamp: new Date().toISOString(),
+      timestamp: getISTDate().toISOString(),
       footer: {
         text: 'Campus Learning Dashboard - Daily Report',
       },
@@ -408,7 +401,7 @@ export class DiscordService {
           inline: false,
         },
       ],
-      timestamp: new Date().toISOString(),
+      timestamp: getISTDate().toISOString(),
       footer: {
         text: 'Campus Learning Dashboard - Alert System',
       },
@@ -432,7 +425,7 @@ export class DiscordService {
       title,
       description,
       color,
-      timestamp: new Date().toISOString(),
+      timestamp: getISTDate().toISOString(),
       footer: {
         text: 'Campus Learning Dashboard',
       },
@@ -684,7 +677,7 @@ export class DiscordService {
           inline: false,
         },
       ],
-      timestamp: new Date().toISOString(),
+      timestamp: getISTDate().toISOString(),
       footer: {
         text: 'Campus Learning Dashboard - Daily Report',
       },
@@ -732,3 +725,4 @@ export class DiscordService {
     );
   }
 }
+
