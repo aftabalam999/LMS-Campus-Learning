@@ -2,12 +2,13 @@
  * Attendance Scheduler Service
  * 
  * Handles automatic scheduling of attendance reports to Discord
- * - Sends daily attendance reports at 10:00 AM
+ * - Sends daily attendance reports at 10:00 AM IST
  * - Supports campus-wise reporting
  */
 
 import { AttendanceTrackingService, DailyAttendanceStats, StudentDailyStatus } from './attendanceTrackingService';
 import { DiscordService } from './discordService';
+import { getISTDate, getISTHours, getISTMinutes } from '../utils/timezone';
 
 export class AttendanceScheduler {
   private static schedulerInterval: NodeJS.Timeout | null = null;
@@ -59,25 +60,25 @@ export class AttendanceScheduler {
   }
 
   /**
-   * Check if it's time to send the report (10:00 AM)
+   * Check if it's time to send the report (10:00 AM IST)
    */
   private static async checkAndSendReport(): Promise<void> {
-    const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
+    const now = getISTDate();
+    const hours = getISTHours();
+    const minutes = getISTMinutes();
     const seconds = now.getSeconds();
     const todayDate = now.toISOString().split('T')[0];
 
     // Log current time for debugging (only at the start of each minute)
     if (seconds === 0) {
-      console.log(`⏰ Scheduler check: ${hours}:${minutes.toString().padStart(2, '0')}`);
+      console.log(`⏰ Scheduler check (IST): ${hours}:${minutes.toString().padStart(2, '0')}`);
     }
 
-    // Send report at 10:00 AM (hours === 10 and minutes === 0)
+    // Send report at 10:00 AM IST (hours === 10 and minutes === 0)
     // Only send once per day by checking lastReportDate
     // Also check if not already sending to prevent duplicates
     if (hours === 10 && minutes === 0 && this.lastReportDate !== todayDate && !this.isSendingReport) {
-      console.log('⏰ It\'s 10:00 AM - Sending morning attendance reports...');
+      console.log('⏰ It\'s 10:00 AM IST - Sending morning attendance reports...');
       this.isSendingReport = true; // Lock to prevent concurrent sends
       this.lastReportDate = todayDate; // Mark as sent for today
       
@@ -96,7 +97,7 @@ export class AttendanceScheduler {
    * Send attendance reports for all campuses
    */
   private static async sendAllCampusReports(): Promise<void> {
-    const today = new Date();
+    const today = getISTDate();
     const campuses = ['Dharamshala', 'Dantewada', 'Jashpur', 'Raigarh', 'Pune', 'Sarjapur', 'Kishanganj', 'Eternal'];
 
     try {
@@ -234,7 +235,7 @@ export class AttendanceScheduler {
    * This can be called from the admin dashboard
    */
   static async triggerManualReport(campus?: string): Promise<void> {
-    const today = new Date();
+    const today = getISTDate();
     console.log(`📤 Manually sending attendance report for ${campus || 'All Campuses'}...`);
     await this.sendCampusReport(today, campus);
   }
