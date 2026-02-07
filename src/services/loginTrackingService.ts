@@ -52,12 +52,12 @@ export class LoginTrackingService {
     try {
       const loginsRef = collection(db, 'daily_logins');
       const snapshot = await getDocs(loginsRef);
-      
+
       // Check all date documents for this user
       for (const dateDoc of snapshot.docs) {
-        const userLoginRef = doc(db, 'daily_logins', dateDoc.id, 'logins', userId);
+
         const userLoginDoc = await getDocs(collection(db, 'daily_logins', dateDoc.id, 'logins'));
-        
+
         // If we find any login record for this user, it's not their first login
         const hasRecord = userLoginDoc.docs.some(doc => doc.id === userId);
         if (hasRecord) {
@@ -122,7 +122,7 @@ export class LoginTrackingService {
    */
   private static async recordLoginInFirestore(user: User): Promise<void> {
     const today = this.getTodayDate();
-    const loginTime = new Date();
+
 
     // Build login record, only including defined values (Firestore doesn't accept undefined)
     const loginRecord: any = {
@@ -143,7 +143,7 @@ export class LoginTrackingService {
     try {
       // Store in daily_logins/{date}/logins/{user_id}
       const loginDocRef = doc(db, 'daily_logins', today, 'logins', user.id);
-      
+
       await setDoc(loginDocRef, loginRecord, { merge: true });
 
       console.log('✅ Login recorded in Firestore');
@@ -209,7 +209,7 @@ export class LoginTrackingService {
     try {
       // Check if this is the user's first login ever
       const isFirstTime = await this.isFirstTimeLogin(user.id);
-      
+
       if (isFirstTime) {
         console.log('🎉 First-time login detected for:', user.name);
       }
@@ -297,7 +297,7 @@ export class LoginTrackingService {
       // Get all documents in the date range
       const start = new Date(startDate);
       const end = new Date(endDate);
-      
+
       for (let date = start; date <= end; date.setDate(date.getDate() + 1)) {
         const dateStr = date.toISOString().split('T')[0];
         const dayLogins = await this.getLoginsByDate(dateStr);
@@ -338,7 +338,7 @@ export class LoginTrackingService {
    */
   static async sendDailySummary(date?: string): Promise<void> {
     const targetDate = date || this.getTodayDate();
-    
+
     try {
       const logins = await this.getLoginsByDate(targetDate);
 
@@ -349,7 +349,7 @@ export class LoginTrackingService {
       logins.forEach(login => {
         const campus = login.campus || 'Unknown';
         const role = login.role || 'Student';
-        
+
         byCampus[campus] = (byCampus[campus] || 0) + 1;
         byRole[role] = (byRole[role] || 0) + 1;
       });
@@ -430,13 +430,13 @@ export class LoginTrackingService {
       if (hasLoggedInBefore) {
         // This is still their first time and profile is now complete!
         console.log('🎉 Sending postponed first-time login notification for:', user.name);
-        
+
         // Send the first-time notification
         await this.sendDiscordNotification(user, true);
-        
+
         // Mark as recorded so we don't send again
         this.markFirstLoginRecorded(user.id);
-        
+
         console.log('✅ Postponed first-time login notification sent');
       }
     } catch (error) {

@@ -96,7 +96,7 @@ export class PhaseApprovalService {
 
     // Fetch approver name for denormalization
     const approver = await UserService.getById(COLLECTIONS.USERS, approverId) as User | null;
-    
+
     // Update the approval status
     await FirestoreService.update<PhaseApproval>(
       COLLECTIONS.PHASE_APPROVALS,
@@ -115,7 +115,7 @@ export class PhaseApprovalService {
       const allPhases = await PhaseService.getAllPhases();
       const currentPhase = allPhases.find((p: Phase) => p.id === approval.current_phase_id);
       const nextPhase = allPhases.find((p: Phase) => p.id === approval.next_phase_id);
-      
+
       if (!currentPhase || !nextPhase) {
         throw new Error('Phase not found');
       }
@@ -123,8 +123,12 @@ export class PhaseApprovalService {
       // Find all phases that should be marked as completed
       // (current phase and any phases between current and next)
       const phasesToComplete = allPhases.filter((phase: Phase) => {
-          // Only consider ordered phases (not special phases with order >= 9)
-          if (phase.order >= 9) return false;
+        // Only consider ordered phases (not special phases with order >= 9)
+        if (phase.order >= 9) return false;
+
+        // Include phases from current up to (but not including) next phase
+        // This ensures student is marked as completed for current phase and any skipped phases
+        return phase.order >= currentPhase.order && phase.order < nextPhase.order;
       });
 
       // Update all skipped/completed phases
@@ -172,7 +176,7 @@ export class PhaseApprovalService {
   ): Promise<void> {
     // Fetch approver name for denormalization
     const approver = await UserService.getById(COLLECTIONS.USERS, approverId) as User | null;
-    
+
     await FirestoreService.update<PhaseApproval>(
       COLLECTIONS.PHASE_APPROVALS,
       approvalId,
@@ -211,7 +215,7 @@ export class PhaseApprovalService {
 
     // Get all approved phase IDs
     const approvedPhaseIds = approvedRequests.map(req => req.next_phase_id);
-    
+
     // Allow access if this phase is approved
     return approvedPhaseIds.includes(phaseId);
   }
@@ -259,7 +263,7 @@ export class PhaseApprovalService {
 
       // Track active students per phase (students currently working in each phase)
       const activeStudentsPerPhase = new Map<string, Set<string>>();
-      
+
       // Track completed students per phase (students who have moved to next phase)
       const completedStudentsPerPhase = new Map<string, Set<string>>();
 
@@ -281,39 +285,39 @@ export class PhaseApprovalService {
 
       // Process approved phase transitions
       const approvedTransitions = approvals.filter((a: PhaseApproval) => a.status === 'approved');
-      
+
       // Create a phase map for quick lookup
       const phaseMap = new Map(phases.map((p: Phase) => [p.id, p]));
-      
+
       approvedTransitions.forEach((approval: PhaseApproval) => {
         const currentPhase = phaseMap.get(approval.current_phase_id);
         const nextPhase = phaseMap.get(approval.next_phase_id);
-        
+
         if (!currentPhase || !nextPhase) return;
-        
+
         // Find all phases between current and next (including current, excluding next)
         const phasesToComplete = phases.filter((phase: Phase) => {
           // Only consider ordered phases (not special phases with order >= 9)
           if (phase.order >= 9) return false;
-          
+
           // Include phases from current up to (but not including) next phase
           return phase.order >= currentPhase.order && phase.order < nextPhase.order;
         });
-        
+
         // Mark student as completed in all skipped phases
         phasesToComplete.forEach((phase: Phase) => {
           // Remove student from active count
           if (activeStudentsPerPhase.has(phase.id)) {
             activeStudentsPerPhase.get(phase.id)!.delete(approval.student_id);
           }
-          
+
           // Add student to completed count
           if (!completedStudentsPerPhase.has(phase.id)) {
             completedStudentsPerPhase.set(phase.id, new Set());
           }
           completedStudentsPerPhase.get(phase.id)!.add(approval.student_id);
         });
-        
+
         // Add student to active count in the destination phase (where they jumped to)
         if (activeStudentsPerPhase.has(approval.next_phase_id)) {
           activeStudentsPerPhase.get(approval.next_phase_id)!.add(approval.student_id);

@@ -1,7 +1,7 @@
 import { collection, query, where, getDocs, updateDoc, doc, orderBy, limit, arrayUnion } from 'firebase/firestore';
 import { db } from './firebase';
 import { COLLECTIONS } from './firestore';
-import { WebhookChangeNotification } from '../types';
+
 
 export interface GenericNotification {
   id: string;
@@ -29,7 +29,7 @@ export class GenericNotificationService {
         orderBy('timestamp', 'desc'),
         limit(limitCount)
       );
-      
+
       const webhookSnapshot = await getDocs(webhookQuery);
       const webhookNotifications = webhookSnapshot.docs.map(docSnap => {
         const data = docSnap.data();
@@ -58,7 +58,7 @@ export class GenericNotificationService {
         orderBy('created_at', 'desc'),
         limit(limitCount)
       );
-      
+
       const leaveSnapshot = await getDocs(leaveQuery);
       const leaveNotifications = leaveSnapshot.docs.map(docSnap => {
         const data = docSnap.data();
@@ -103,7 +103,7 @@ export class GenericNotificationService {
         orderBy('created_at', 'desc'),
         limit(limitCount)
       );
-      
+
       const leaveSnapshot = await getDocs(leaveQuery);
       const leaveNotifications = leaveSnapshot.docs.map(docSnap => {
         const data = docSnap.data();
@@ -139,7 +139,7 @@ export class GenericNotificationService {
   static async markAsRead(notificationId: string, userId: string, notificationType: GenericNotification['type']): Promise<void> {
     try {
       let collectionName: string;
-      
+
       if (notificationType === 'webhook_change') {
         collectionName = COLLECTIONS.WEBHOOK_CHANGE_NOTIFICATIONS;
       } else {
@@ -169,7 +169,7 @@ export class GenericNotificationService {
         orderBy('timestamp', 'desc'),
         limit(100)
       );
-      
+
       const webhookSnapshot = await getDocs(webhookQuery);
       webhookSnapshot.docs.forEach(docSnap => {
         const readBy = docSnap.data().read_by || [];
@@ -185,7 +185,7 @@ export class GenericNotificationService {
         orderBy('created_at', 'desc'),
         limit(100)
       );
-      
+
       const leaveSnapshot = await getDocs(leaveQuery);
       leaveSnapshot.docs.forEach(docSnap => {
         const readBy = docSnap.data().read_by || [];
@@ -212,10 +212,10 @@ export class GenericNotificationService {
         orderBy('created_at', 'desc'),
         limit(100)
       );
-      
+
       const snapshot = await getDocs(q);
       let unreadCount = 0;
-      
+
       snapshot.docs.forEach(docSnap => {
         const readBy = docSnap.data().read_by || [];
         if (!readBy.includes(userId)) {
