@@ -23,6 +23,13 @@ const DUMMY_MENTORS = [
         role: 'mentor',
         campus: 'Dharamshala',
         house: 'Malhar'
+    },
+    {
+        name: 'Sonal Mentor',
+        email: 'sonal.mentor@navgurukul.org',
+        role: 'mentor',
+        campus: 'Dharamshala',
+        house: 'Yaman'
     }
 ];
 
@@ -31,7 +38,9 @@ const HOUSES = ['Bageshree', 'Malhar', 'Bhairav', 'Yaman', 'Kafi'];
 const NAMES = [
     'Amit', 'Neha', 'Rohan', 'Sneha', 'Vikram', 'Anjali', 'Deepak', 'Pooja', 'Rahul', 'Kavita',
     'Arjun', 'Meera', 'Sanjay', 'Divya', 'Karan', 'Nisha', 'Raj', 'Simran', 'Varun', 'Aisha',
-    'Aditya', 'Riya', 'Sameer', 'Tanvi', 'Vivek'
+    'Aditya', 'Riya', 'Sameer', 'Tanvi', 'Vivek', 'Suresh', 'Priya', 'Manish', 'Geeta', 'Harish',
+    'Bhavna', 'Gaurav', 'Ishita', 'Jatin', 'Kajal', 'Lokesh', 'Monika', 'Naveen', 'Ojas', 'Parul',
+    'Qasim', 'Rashmi', 'Siddharth', 'Tejas', 'Urvashi', 'Vishal', 'Wahid', 'Xena', 'Yash', 'Zoya'
 ];
 
 const DUMMY_STUDENTS = NAMES.map((name, index) => ({

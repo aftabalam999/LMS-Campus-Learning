@@ -20,7 +20,7 @@ export class AuthService {
       // Add Google Calendar API scopes
       this.googleProvider.addScope('https://www.googleapis.com/auth/calendar.readonly');
       this.googleProvider.addScope('https://www.googleapis.com/auth/calendar.events');
-      
+
       // Set custom parameters for OAuth with minimal configuration
       this.googleProvider.setCustomParameters({
         prompt: 'select_account',
@@ -46,24 +46,19 @@ export class AuthService {
   // Common handler for both popup and redirect results
   private static async handleGoogleSignInResult(firebaseUser: FirebaseUser): Promise<FirebaseUser> {
     // Check if user's email domain is allowed (Navgurukul domain only)
+    // Check if user's email exists
     const userEmail = firebaseUser.email;
     if (!userEmail) {
       await signOut(auth);
       throw new Error('No email address found in Google account');
     }
 
-    const allowedDomains = ['navgurukul.org'];
-    const emailDomain = userEmail.split('@')[1]?.toLowerCase();
-    
-    if (!allowedDomains.includes(emailDomain)) {
-      // Sign out the user immediately if domain is not allowed
-      await signOut(auth);
-      throw new Error(`Access denied. Only Navgurukul domain emails (@navgurukul.org) are allowed to sign in.`);
-    }
+
+
 
     // Check if user exists in Firestore, create if not
     let existingUser = await UserService.getUserById(firebaseUser.uid);
-    
+
     if (!existingUser) {
       // Create new user document for first-time Google sign-in with UID as document ID
       await UserService.createUserWithId(firebaseUser.uid, {

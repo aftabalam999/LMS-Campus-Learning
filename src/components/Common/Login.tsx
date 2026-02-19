@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { DataSeedingService } from '../../services/dataSeedingService';
+import { UserSeedingService } from '../../services/userSeedingService';
 
 const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -79,24 +81,7 @@ const Login: React.FC = () => {
           </p>
         </div>
 
-        {/* Domain Restriction Notice */}
-        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-start">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-blue-800">
-                Navgurukul Access Only
-              </h3>
-              <div className="mt-1 text-sm text-blue-700">
-                <p>Only users with <strong>@navgurukul.org</strong> email addresses can access this platform.</p>
-              </div>
-            </div>
-          </div>
-        </div>
+
 
         <div className="mt-8">
           {error && (
@@ -145,77 +130,101 @@ const Login: React.FC = () => {
           </div>
         </div>
 
-        {/* Demo Accounts - Only visible in development */}
-        {(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
-          <div className="hidden lg:block ml-8 w-80 bg-white p-6 rounded-lg shadow-lg border border-gray-200 overflow-y-auto max-h-[80vh]">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">Demo Accounts</h3>
-            <p className="text-xs text-gray-500 mb-4">Click any account to quick login (Dev only)</p>
+        {/* Demo Accounts - Visible for Resume Demo */}
+        <div className="hidden lg:block ml-8 w-80 bg-white p-6 rounded-lg shadow-lg border border-gray-200 overflow-y-auto max-h-[80vh]">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">Demo Accounts</h3>
+          <p className="text-xs text-gray-500 mb-4">Click any account to quick login</p>
 
-            <div className="space-y-6">
-              {/* Admin */}
-              <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">Admin</h4>
+
+          <div className="space-y-6">
+            {/* Admin */}
+            <div>
+              <h4 className="text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">Admin</h4>
+              <button
+                onClick={() => impersonateUser?.('admin@navgurukul.org')}
+                className="w-full text-left bg-purple-50 hover:bg-purple-100 p-3 rounded-md transition-colors border border-purple-100 group"
+              >
+                <div className="font-medium text-purple-900">System Admin</div>
+                <div className="text-xs text-purple-600">admin@navgurukul.org</div>
+              </button>
+            </div>
+
+            {/* Mentors */}
+            <div>
+              <h4 className="text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">Mentors</h4>
+              <div className="space-y-2">
                 <button
-                  onClick={() => impersonateUser?.('admin@navgurukul.org')}
-                  className="w-full text-left bg-purple-50 hover:bg-purple-100 p-3 rounded-md transition-colors border border-purple-100 group"
+                  onClick={() => impersonateUser?.('rahul.mentor@navgurukul.org')}
+                  className="w-full text-left bg-blue-50 hover:bg-blue-100 p-3 rounded-md transition-colors border border-blue-100"
                 >
-                  <div className="font-medium text-purple-900">System Admin</div>
-                  <div className="text-xs text-purple-600">admin@navgurukul.org</div>
+                  <div className="font-medium text-blue-900">Rahul Mentor</div>
+                  <div className="text-xs text-blue-600">rahul.mentor@navgurukul.org</div>
+                </button>
+                <button
+                  onClick={() => impersonateUser?.('priya.mentor@navgurukul.org')}
+                  className="w-full text-left bg-blue-50 hover:bg-blue-100 p-3 rounded-md transition-colors border border-blue-100"
+                >
+                  <div className="font-medium text-blue-900">Priya Mentor</div>
+                  <div className="text-xs text-blue-600">priya.mentor@navgurukul.org</div>
                 </button>
               </div>
-
-              {/* Mentors */}
-              <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">Mentors</h4>
-                <div className="space-y-2">
-                  <button
-                    onClick={() => impersonateUser?.('rahul.mentor@navgurukul.org')}
-                    className="w-full text-left bg-blue-50 hover:bg-blue-100 p-3 rounded-md transition-colors border border-blue-100"
-                  >
-                    <div className="font-medium text-blue-900">Rahul Mentor</div>
-                    <div className="text-xs text-blue-600">rahul.mentor@navgurukul.org</div>
-                  </button>
-                  <button
-                    onClick={() => impersonateUser?.('priya.mentor@navgurukul.org')}
-                    className="w-full text-left bg-blue-50 hover:bg-blue-100 p-3 rounded-md transition-colors border border-blue-100"
-                  >
-                    <div className="font-medium text-blue-900">Priya Mentor</div>
-                    <div className="text-xs text-blue-600">priya.mentor@navgurukul.org</div>
-                  </button>
-                </div>
-              </div>
-
-              {/* Students */}
-              <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">Students</h4>
-                <div className="space-y-2">
-                  {[
-                    { name: 'Amit Student', email: 'amit.student@navgurukul.org' },
-                    { name: 'Neha Student', email: 'neha.student@navgurukul.org' },
-                    { name: 'Rohan Student', email: 'rohan.student@navgurukul.org' },
-                    { name: 'Sneha Student', email: 'sneha.student@navgurukul.org' },
-                    { name: 'Vikram Student', email: 'vikram.student@navgurukul.org' }
-                  ].map((student) => (
-                    <button
-                      key={student.email}
-                      onClick={() => impersonateUser?.(student.email)}
-                      className="w-full text-left bg-green-50 hover:bg-green-100 p-3 rounded-md transition-colors border border-green-100"
-                    >
-                      <div className="font-medium text-green-900">{student.name}</div>
-                      <div className="text-xs text-green-600">{student.email}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-gray-100">
-              <p className="text-xs text-gray-400 text-center">
-                These accounts are generated by the user seeding service.
-              </p>
+            {/* Data Seeding - New Section */}
+            <div className="pt-4 mt-4 border-t border-gray-200">
+              <h4 className="text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">Data Managment</h4>
+              <button
+                onClick={async () => {
+                  if (window.confirm('This will seed Phases, Topics, Users, and Sample Activity. Continue?')) {
+                    console.log('🌱 Seeding data...');
+                    try {
+                      await DataSeedingService.seedInitialData();
+                      await UserSeedingService.seedUsersAndData();
+                      alert('✅ Data seeding completed successfully!');
+                      window.location.reload();
+                    } catch (err) {
+                      console.error(err);
+                      alert('❌ Seeding failed. Check console.');
+                    }
+                  }
+                }}
+                className="w-full text-left bg-orange-50 hover:bg-orange-100 p-3 rounded-md transition-colors border border-orange-100 text-orange-800 font-medium"
+              >
+                🌱 Seed Random Data
+              </button>
+            </div>
+
+            {/* Students */}
+            <div>
+              <h4 className="text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">Students</h4>
+              <div className="space-y-2">
+                {[
+                  { name: 'Amit Student', email: 'amit.student@navgurukul.org' },
+                  { name: 'Neha Student', email: 'neha.student@navgurukul.org' },
+                  { name: 'Rohan Student', email: 'rohan.student@navgurukul.org' },
+                  { name: 'Sneha Student', email: 'sneha.student@navgurukul.org' },
+                  { name: 'Vikram Student', email: 'vikram.student@navgurukul.org' }
+                ].map((student) => (
+                  <button
+                    key={student.email}
+                    onClick={() => impersonateUser?.(student.email)}
+                    className="w-full text-left bg-green-50 hover:bg-green-100 p-3 rounded-md transition-colors border border-green-100"
+                  >
+                    <div className="font-medium text-green-900">{student.name}</div>
+                    <div className="text-xs text-green-600">{student.email}</div>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-        )}
+
+          <div className="mt-6 pt-4 border-t border-gray-100">
+            <p className="text-xs text-gray-400 text-center">
+              These accounts are generated by the user seeding service.
+            </p>
+          </div>
+        </div>
+
       </div>
     </div>
   );
